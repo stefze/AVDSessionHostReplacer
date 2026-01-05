@@ -286,7 +286,7 @@ resource functionApp 'Microsoft.Web/sites@2022-03-01' = {
     serverFarmId: appServicePlan.id
     siteConfig: {
       use32BitWorkerProcess: false
-      powerShellVersion: '7.2'
+      powerShellVersion: '7.4'
       netFrameworkVersion: 'v6.0'
       appSettings: varFunctionAppSettings
       ftpsState: 'Disabled'
