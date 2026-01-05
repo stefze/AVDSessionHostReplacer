@@ -38,12 +38,12 @@ param MarketPlaceOrCustomImage string
   '2022-datacenter-core-smalldisk-g2'
   'win11-21h2-avd-m365'
   'win11-23h2-avd'
-  'win11-23h2-avd-m365'
+  'win11-25h2-avd-m365'
   'win11-22h2-avd'
   '2022-datacenter-g2'
   'win10-22h2-avd-g2'
 ])
-param MarketPlaceImage string = 'win11-23h2-avd-m365'
+param MarketPlaceImage string = 'win11-25h2-avd-m365'
 param GalleryImageId string = ''
 
 @allowed([
@@ -214,10 +214,10 @@ var varMarketPlaceImages = {
     offer: 'windows-11'
     sku: 'win11-23h2-avd'
   }
-  'win11-23h2-avd-m365': {
+  'win11-25h2-avd-m365': {
     publisher: 'MicrosoftWindowsDesktop'
     offer: 'office-365'
-    sku: 'win11-23h2-avd-m365'
+    sku: 'win11-25h2-avd-m365'
   }
 }
 var varImageReference = MarketPlaceOrCustomImage == 'Marketplace'
