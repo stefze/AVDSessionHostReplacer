@@ -797,6 +797,7 @@
 		},
 		"outputs": {
 			"kind": "ResourceGroup",
+			"subscriptionId": "[steps('basics').resourceScope.subscription.id]",
 			"resourceGroupId": "[steps('basics').resourceScope.resourceGroup.id]",
 			"location": "[steps('basics').resourceScope.location.name]",
 			"parameters": {
