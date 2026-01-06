@@ -304,21 +304,6 @@
 							}
 						},
 						{
-							"name": "DiskSizeGB",
-							"type": "Microsoft.Common.Slider",
-							"min": 64,
-							"max": 512,
-							"label": "OS Disk Size",
-							"subLabel": "GB",
-							"defaultValue": 128,
-							"showStepMarkers": false,
-							"toolTip": "Size of the OS disk in GB.",
-							"constraints": {
-								"required": true
-							},
-							"visible": true
-						},
-						{
 							"name": "optionMarketPlaceOrCustomImage",
 							"type": "Microsoft.Common.OptionsGroup",
 							"label": "Image Source",
