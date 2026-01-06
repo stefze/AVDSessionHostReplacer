@@ -60,6 +60,13 @@
         "Premium_LRS"
       ]
     },
+        "DiskSizeGB": {
+      "type": "int",
+      "defaultValue": 128,
+      "metadata": {
+        "description": "OS disk size in GB"
+      }
+    },
     "MarketPlaceOrCustomImage": {
       "type": "string",
       "defaultValue": "Marketplace",
