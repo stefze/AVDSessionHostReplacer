@@ -658,7 +658,7 @@
               "apiVersion": "2023-01-01",
               "name": "[format('{0}/{1}', parameters('FunctionAppName'), 'MSDeploy')]",
               "properties": {
-                "packageUri": "[parameters('FunctionAppZipUrl')]"
+                "packageUri": "[parameters('FunctionAppUrl')]"
               },
               "dependsOn": [
                 "[resourceId('Microsoft.Web/sites', parameters('FunctionAppName'))]"
