@@ -961,7 +961,7 @@
               },
               "resources": [
                 {
-                  "copy": {
+                  "[string('copy')]": {
                     "name": "deploySessionHosts",
                     "count": "[[length(parameters('VMNames'))]"
                   },
