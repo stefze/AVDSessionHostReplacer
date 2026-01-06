@@ -485,8 +485,7 @@
 									}
 								]
 							}
-						},
-						
+						},					
 {
   "name": "DnsSettings",
   "type": "Microsoft.Common.Section",
@@ -516,8 +515,7 @@
       }
     }
   ]
-}
-
+},
 						{
 							"name": "DomainJoinSection",
 							"type": "Microsoft.Common.Section",
