@@ -797,7 +797,8 @@
 		},
 		"outputs": {
 			"kind": "ResourceGroup",
-			"resourceGroupId": "[steps('basics').resourceScope.resourceGroup.id]",
+			"subscriptionId": "[steps('basics').resourceScope.subscription.id]",
+			"resourceGroupName": "[steps('basics').resourceScope.resourceGroup.name]",
 			"location": "[steps('basics').resourceScope.location.name]",
 			"parameters": {
 				"HostPoolResourceGroupName": "[steps('basics').HostPoolSettingsSection.HostPoolSelector.resourceGroup]",
