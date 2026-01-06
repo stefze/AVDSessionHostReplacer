@@ -1368,7 +1368,6 @@
       "apiVersion": "2022-09-01",
       "name": "[format('RBAC-vdiVMContributor-{0}', parameters('TimeStamp'))]",
       "subscriptionId": "[subscription().subscriptionId]",
-      "location": "[resourceGroup().location]",
       "properties": {
         "expressionEvaluationOptions": {
           "scope": "inner"
@@ -1429,7 +1428,6 @@
       "apiVersion": "2022-09-01",
       "name": "[format('RBAC-TemplateSpecReader-{0}', parameters('TimeStamp'))]",
       "subscriptionId": "[subscription().subscriptionId]",
-      "location": "[resourceGroup().location]",
       "properties": {
         "expressionEvaluationOptions": {
           "scope": "inner"
