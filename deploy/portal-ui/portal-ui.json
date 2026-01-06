@@ -502,36 +502,6 @@
 							}
 						},
 						{
-							"name": "DnsSettings",
-							"type": "Microsoft.Common.Section",
-							"label": "DNS settings",
-							"visible": true,
-							"elements": [
-								{
-									"name": "DnsServers",
-									"type": "Microsoft.Common.Array",
-									"label": "DNS servers",
-									"toolTip": "Add up to two IPv4 DNS servers.",
-									"constraints": {
-										"required": false,
-										"minLength": 0,
-										"maxLength": 2
-									},
-									"defaultValue": [],
-									"element": {
-										"type": "Microsoft.Common.TextBox",
-										"label": "IPv4 address",
-										"placeholder": "e.g., 10.0.0.4",
-										"constraints": {
-											"required": true,
-											"regex": "^((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)\\.){3}(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)$",
-											"validationMessage": "Enter a valid IPv4 address (0–255 in each octet)."
-										}
-									}
-								}
-							]
-						},
-						{
 							"name": "DomainJoinSection",
 							"type": "Microsoft.Common.Section",
 							"visible": true,
