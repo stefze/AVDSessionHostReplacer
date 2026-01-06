@@ -310,12 +310,13 @@
 							"max": 512,
 							"label": "OS Disk Size",
 							"subLabel": "GB",
-							"defaultValue": 64,
+							"defaultValue": 128,
 							"showStepMarkers": false,
 							"toolTip": "Size of the OS disk in GB.",
 							"constraints": {
 								"required": true
-							}
+							},
+							"visible": true
 						},
 						{
 							"name": "optionMarketPlaceOrCustomImage",
