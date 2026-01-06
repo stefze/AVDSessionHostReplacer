@@ -797,7 +797,6 @@
 		},
 		"outputs": {
 			"kind": "ResourceGroup",
-			"subscriptionId": "[steps('basics').resourceScope.subscription.id]",
 			"resourceGroupId": "[steps('basics').resourceScope.resourceGroup.id]",
 			"location": "[steps('basics').resourceScope.location.name]",
 			"parameters": {
@@ -846,7 +845,7 @@
 				"ReplaceSessionHostOnNewImageVersionDelayDays": "[steps('optionalParametersStep')._ReplaceSessionHostOnNewImageVersionDelayDays]",
 				"VMNamesTemplateParameterName": "VMNames",
 				"SessionHostResourceGroupName": "[steps('optionalParametersStep')._SessionHostResourceGroupName]",
-				"DnsServers": "[createArray(steps('SessionHostsTemplate').DnsSettings.DnsServers1, steps('SessionHostsTemplate').DnsSettings.DnsServers2)]"
+				"DnsServers": "[createArray(steps('SessionHostsTemplate').DnsSettings.DnsServer1, steps('SessionHostsTemplate').DnsSettings.DnsServer2)]"
 			}
 		}
 	}
