@@ -304,6 +304,21 @@
 							}
 						},
 						{
+							"name": "DiskSizeGB",
+							"type": "Microsoft.Common.Slider",
+							"min": 64,
+							"max": 512,
+							"label": "OS Disk Size",
+							"subLabel": "GB",
+							"defaultValue": 128,
+							"showStepMarkers": false,
+							"toolTip": "Size of the OS disk in GB.",
+							"constraints": {
+								"required": true
+							},
+							"visible": true
+						},
+						{
 							"name": "optionMarketPlaceOrCustomImage",
 							"type": "Microsoft.Common.OptionsGroup",
 							"label": "Image Source",
@@ -824,7 +839,7 @@
 				"DrainGracePeriodHours": "[steps('optionalParametersStep')._DrainGracePeriodHours]",
 				"FixSessionHostTags": "[steps('optionalParametersStep')._FixSessionHostTags]",
 				"IncludePreExistingSessionHosts": "[steps('basics').HostPoolSettingsSection.IncludePreExistingSessionHosts]",
-				"DeploymentPrefix": "[steps('optionalParametersStep')._SHRDeploymentPrefix]",
+				"SHRDeploymentPrefix": "[steps('optionalParametersStep')._SHRDeploymentPrefix]",
 				"SessionHostInstanceNumberPadding": "[steps('optionalParametersStep')._SessionHostInstanceNumberPadding]",
 				"SessionHostNameSeparator": "[if(steps('optionalParametersStep')._SessionHostNameSeparator,'-','')]",
 				"ReplaceSessionHostOnNewImageVersion": "[steps('optionalParametersStep')._ReplaceSessionHostOnNewImageVersion]",
