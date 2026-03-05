@@ -39,10 +39,15 @@ function Get-SHRHostPoolDecision {
     # Basic Info
     Write-PSFMessage -Level Host -Message "We have {0} session hosts (included in Automation)" -StringValues $SessionHosts.Count
 
+    [array] $deletionEligibleSessionHosts = $SessionHosts | Where-Object { [string]::IsNullOrWhiteSpace($_.AssignedUser) }
+    [array] $assignedSessionHosts = $SessionHosts | Where-Object { -not [string]::IsNullOrWhiteSpace($_.AssignedUser) }
+    Write-PSFMessage -Level Host -Message "Found {0} session hosts assigned to users. These hosts are excluded from removal." -StringValues $assignedSessionHosts.Count
+    Write-PSFMessage -Level Host -Message "Found {0} session hosts eligible for removal." -StringValues $deletionEligibleSessionHosts.Count
+
     # Identify Session hosts that should be replaced
     if ($TargetVMAgeDays -gt 0) {
         $targetReplacementDate = (Get-Date).AddDays(-$TargetVMAgeDays)
-        [array] $sessionHostsOldAge = $SessionHosts | Where-Object { $_.DeployTimestamp -lt $targetReplacementDate }
+        [array] $sessionHostsOldAge = $deletionEligibleSessionHosts | Where-Object { $_.DeployTimestamp -lt $targetReplacementDate }
         Write-PSFMessage -Level Host -Message "Found {0} session hosts to replace due to old age. {1}" -StringValues $sessionHostsOldAge.Count, ($sessionHostsOldAge.VMName -join ',')
 
     }
@@ -52,7 +57,7 @@ function Get-SHRHostPoolDecision {
         Write-PSFMessage -Level Host -Message "Latest Image {0} is {1:N0} days old." -StringValues $LatestImageVersion.Version, $latestImageAge
         if ($latestImageAge -ge $ReplaceSessionHostOnNewImageVersionDelayDays) {
             Write-PSFMessage -Level Host -Message "Latest Image age is older than (or equal) New Image Delay value {0}" -StringValues $ReplaceSessionHostOnNewImageVersionDelayDays
-            [array] $sessionHostsOldVersion = $sessionHosts | Where-Object { $_.ImageVersion -ne $LatestImageVersion.Version }
+            [array] $sessionHostsOldVersion = $deletionEligibleSessionHosts | Where-Object { $_.ImageVersion -ne $LatestImageVersion.Version }
             Write-PSFMessage -Level Host -Message "Found {0} session hosts to replace due to new image version. {1}" -StringValues $sessionHostsOldVersion.Count, ($sessionHostsOldVersion.VMName -Join ',')
         }
     }
@@ -90,16 +95,23 @@ function Get-SHRHostPoolDecision {
     }
 
 
-    $weCanDelete = $SessionHosts.Count - $TargetSessionHostCount
-    if ($weCanDelete -gt 0) {
-        Write-PSFMessage -Level Host -Message "We need to delete {0} session hosts" -StringValues $weCanDelete
+    $weCanDelete = 0
+    $requestedDeleteCount = $SessionHosts.Count - $TargetSessionHostCount
+    if ($requestedDeleteCount -gt 0) {
+        Write-PSFMessage -Level Host -Message "We need to delete {0} session hosts" -StringValues $requestedDeleteCount
+
+        $weCanDelete = [Math]::Min($requestedDeleteCount, $deletionEligibleSessionHosts.Count)
+        if ($weCanDelete -lt $requestedDeleteCount) {
+            Write-PSFMessage -Level Warning -Message "Can only delete {0} session hosts because {1} hosts are assigned to users and protected from removal." -StringValues $weCanDelete, ($requestedDeleteCount - $weCanDelete)
+        }
+
         if ($weCanDelete -gt $sessionHostsToReplace.Count) {
             Write-PSFMessage -Level Host -Message "Host pool is over populated"
 
             $goodSessionHostsToDeleteCount = $weCanDelete - $sessionHostsToReplace.Count
             Write-PSFMessage -Level Host -Message "We will delete {0} good session hosts" -StringValues $goodSessionHostsToDeleteCount
 
-            $selectedGoodHostsTotDelete = [array] ($goodSessionHosts | Sort-Object -Property Session | Select-Object -First $goodSessionHostsToDeleteCount)
+            $selectedGoodHostsTotDelete = [array] ($goodSessionHosts | Where-Object { [string]::IsNullOrWhiteSpace($_.AssignedUser) } | Sort-Object -Property Session | Select-Object -First $goodSessionHostsToDeleteCount)
             Write-PSFMessage -Level Host -Message "Selected the following good session hosts to delete: {0}" -StringValues ($selectedGoodHostsTotDelete.VMName -join ',')
         }
         else {

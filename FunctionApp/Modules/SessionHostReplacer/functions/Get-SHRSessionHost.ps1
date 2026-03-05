@@ -33,7 +33,7 @@ function Get-SHRSessionHost {
 
     # Get current session hosts
     Write-PSFMessage -Level Host -Message 'Getting current session hosts in host pool {0}' -StringValues $HostPoolName
-    $sessionHosts = Get-AzWvdSessionHost -ResourceGroupName $ResourceGroupName -HostPoolName $HostPoolName -ErrorAction Stop | Select-Object Name, ResourceId, Session, AllowNewSession, Status
+    $sessionHosts = Get-AzWvdSessionHost -ResourceGroupName $ResourceGroupName -HostPoolName $HostPoolName -ErrorAction Stop | Select-Object Name, ResourceId, Session, AllowNewSession, Status, AssignedUser
     Write-PSFMessage -Level Host -Message 'Found {0} session hosts' -StringValues $sessionHosts.Count
 
     # For each session host, get the VM details
