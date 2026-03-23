@@ -669,6 +669,7 @@
             "splitParts": "[split(variables('rgname'), '-')]",
             "rgpattern2": "[concat(variables('splitParts')[2],variables('splitParts')[3],variables('splitParts')[4],variables('splitParts')[5])]",
             "varStorageAccountName": "[concat('st', variables('rgpattern2'))]",
+            "varDeploymentContainerName": "function-releases",
             "varLogAnalyticsWorkspaceName": "[concat('law-', parameters('FunctionAppName'))]",
             "varAppServicePlanName": "[concat('Asp-', parameters('FunctionAppName'))]",
             "varGraphEnvironmentName": "your_value_here"
@@ -696,6 +697,14 @@
                 "name": "Standard_LRS"
               },
               "properties": {}
+            },
+            {
+              "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+              "apiVersion": "2022-09-01",
+              "name": "[format('{0}/{1}/{2}', variables('varStorageAccountName'), 'default', variables('varDeploymentContainerName'))]",
+              "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('varStorageAccountName'))]"
+              ]
             },
             {
               "condition": "[and(parameters('EnableMonitoring'), not(parameters('UseExistingLAW')))]",
@@ -752,6 +761,16 @@
                 "httpsOnly": true,
                 "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('varAppServicePlanName'))]",
                 "functionAppConfig": {
+                  "deployment": {
+                    "storage": {
+                      "type": "blobContainer",
+                      "value": "[format('https://{0}.blob.{1}/{2}', variables('varStorageAccountName'), environment().suffixes.storage, variables('varDeploymentContainerName'))]",
+                      "authentication": {
+                        "type": "StorageAccountConnectionString",
+                        "storageAccountConnectionStringName": "AzureWebJobsStorage"
+                      }
+                    }
+                  },
                   "runtime": {
                     "name": "powershell",
                     "version": "7.4"
@@ -772,7 +791,8 @@
               "dependsOn": [
                 "[resourceId('Microsoft.Insights/components', variables('varAppServicePlanName'))]",
                 "[resourceId('Microsoft.Web/serverfarms', variables('varAppServicePlanName'))]",
-                "[resourceId('Microsoft.Storage/storageAccounts', variables('varStorageAccountName'))]"
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('varStorageAccountName'))]",
+                "[resourceId('Microsoft.Storage/storageAccounts/blobServices/containers', variables('varStorageAccountName'), 'default', variables('varDeploymentContainerName'))]"
               ]
             }
           ],

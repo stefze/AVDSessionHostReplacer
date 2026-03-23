@@ -100,6 +100,7 @@ var varAppInsightsKey = EnableMonitoring ? [
 var varFunctionAppSettingsAndReplacementPlanSettings = union(varFunctionAppSettings, varAppInsightsKey, ReplacementPlanSettings)
 
 var varStorageAccountName = 'stavdrpfunc${uniqueString(FunctionAppName)}'
+var varDeploymentContainerName = 'function-releases'
 var varLogAnalyticsWorkspaceName = '${FunctionAppName}-law'
 var varAppServicePlanName = '${FunctionAppName}-asp'
 //-------//
@@ -117,6 +118,10 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2022-05-01' = {
   properties: {
     // TODO: Discuss securing the storage account (firewall)
   }
+}
+
+resource deploymentContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2022-09-01' = {
+  name: '${storageAccount.name}/default/${varDeploymentContainerName}'
 }
 
 // Deploy or use Log Analytics Workspace
@@ -159,7 +164,7 @@ resource appInsights 'Microsoft.Insights/components@2020-02-02' = if (EnableMoni
 }
 
 // Create ReplaceSessionHost function with Managed System Identity (MSI)
-resource functionApp 'Microsoft.Web/sites@2023-01-01' = {
+resource functionApp 'Microsoft.Web/sites@2024-04-01' = {
   name: FunctionAppName
   location: Location
   kind: 'functionApp,linux'
@@ -168,6 +173,16 @@ resource functionApp 'Microsoft.Web/sites@2023-01-01' = {
     httpsOnly: true
     serverFarmId: appServicePlan.id
     functionAppConfig: {
+      deployment: {
+        storage: {
+          type: 'blobContainer'
+          value: 'https://${storageAccount.name}.blob.${environment().suffixes.storage}/${varDeploymentContainerName}'
+          authentication: {
+            type: 'StorageAccountConnectionString'
+            storageAccountConnectionStringName: 'AzureWebJobsStorage'
+          }
+        }
+      }
       runtime: {
         name: 'powershell'
         version: '7.4'
