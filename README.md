@@ -5,7 +5,7 @@
 This tool automates the deployment and replacement of session hosts in an Azure Virtual Desktop host pool.
 
 The best practice for AVD recommends replacing the session hosts instead of maintaining them,
-the AVD Session Host Replacer helps you manage the task of replacing old session hosts with new ones automatically.
+the AVD Session Host Replacer helps you manage the task of deploying refreshed session hosts automatically.
 
 ## Getting started
 
@@ -23,23 +23,20 @@ Detailed instructions on the required permissions and how to assign them are ava
 
 ## How it works?
 
-There are two criteria for replacing a session host,
-1. **Image Version:** Is there a new image version available? If so, we create a new session host with the new image version. This can be from Marketplace or  Gallery Image Definition.
-2. **Session Host VM Age:** If the session host is older than a certain age, default is 45 days, we create a new session host and drain the old one.
+There are two criteria for deploying refreshed session hosts,
+1. **Image Version:** Is there a new image version available? If so, we create a new session host with the new image version. This can be from Marketplace or Gallery Image Definition.
+2. **Session Host VM Age:** If a managed session host is older than a certain age (default is 45 days), we create a new session host.
 
 The core of an AVD Session Host Replacer is an Azure Function App built using PowerShell, the function is triggered every hour to check each session host against the above criteria.
 
 To deploy new session hosts, the function uses an ARM Template that is stored as a Template Spec at deployment time.
 
-When deleting an old session host, the function will check if it has existing sessions and,
+Session host decommissioning is disabled. The function does not drain, remove, or delete existing session hosts.
 
-1. Place the session host drain mode.
-2. Send a notification to all sessions.
-3. Add a tag to the session host with a timestamp
-4. Delete the session host once there are no sessions or the grace period has passed.
-    - Delete VM
-    - Remove from Host Pool
-    - (If Entra Joined) Delete device from Entra ID
+Only managed session hosts are counted toward `_TargetSessionHostCount`.
+The managed baseline is controlled by `_ManagedSessionHostMinSuffix` (default `1025`).
+Session hosts with a numeric suffix lower than this value are ignored when calculating how many new hosts to deploy.
+New session hosts start at this suffix baseline and fill available gaps in the managed range.
 
 ## FAQ
 - **Can I use a custom Template Spec for Session Hosts deployment?**
@@ -64,11 +61,19 @@ When deleting an old session host, the function will check if it has existing se
 
 - **How can I force replace a specific session host?**
 
-    On the VM(s) you want to replace, update the the tag `AutoReplaceDeployTimestamp` to any date older that 45 days. The Session Host Replacer will replace the VM on the next run.
+    On the VM(s) you want to prioritize for refresh logic, update the tag `AutoReplaceDeployTimestamp` to a date older than the target age. On the next run, the function can deploy additional session hosts.
+
+    Existing hosts are not deleted automatically. Decommission/removal must be handled manually.
+
+- **How does target host count work with legacy host names?**
+
+    The setting `_ManagedSessionHostMinSuffix` (default `1025`) defines the lowest numeric suffix included in target count calculations.
+
+    Example: If `_TargetSessionHostCount` is `5` and existing suffixes are `0231`, `0678`, `0976`, `1025`, `1027`, then only `1025` and `1027` are counted, and the function deploys `3` new hosts: `1026`, `1028`, `1029`.
 
 - **What about AVD Scaling Plans?**
 
-    When the Session Host Replacer needs to delete a session host that has users logged in, it will add a tag `ScalingPlanExclusion` to the VM. The name of the tag is configurable and it should be the same as the tag used in the scaling plan.
+    Because decommissioning is disabled, the function does not place hosts in drain mode and does not apply scaling-plan exclusion tags for pending deletion.
 
 - **What happens if a deployment fails?**
 
