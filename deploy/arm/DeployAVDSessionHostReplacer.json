@@ -743,7 +743,7 @@
             },
             {
               "type": "Microsoft.Web/sites",
-              "apiVersion": "2023-01-01",
+              "apiVersion": "2024-04-01",
               "name": "[parameters('FunctionAppName')]",
               "location": "[parameters('Location')]",
               "kind": "functionApp,linux",
@@ -751,6 +751,12 @@
               "properties": {
                 "httpsOnly": true,
                 "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('varAppServicePlanName'))]",
+                "functionAppConfig": {
+                  "runtime": {
+                    "name": "powershell",
+                    "version": "7.4"
+                  }
+                },
                 "siteConfig": {
                   "use32BitWorkerProcess": false,
                   "linuxFxVersion": "PowerShell|7.4",
@@ -773,7 +779,7 @@
           "outputs": {
             "functionAppPrincipalId": {
               "type": "string",
-              "value": "[if(equals(parameters('FunctionAppIdentity').type, 'SystemAssigned'), reference(resourceId('Microsoft.Web/sites', parameters('FunctionAppName')), '2023-01-01', 'full').identity.principalId, '')]"
+              "value": "[if(equals(parameters('FunctionAppIdentity').type, 'SystemAssigned'), reference(resourceId('Microsoft.Web/sites', parameters('FunctionAppName')), '2024-04-01', 'full').identity.principalId, '')]"
             }
           }
         }

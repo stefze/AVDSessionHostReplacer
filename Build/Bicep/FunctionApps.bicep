@@ -293,6 +293,12 @@ resource functionApp 'Microsoft.Web/sites@2022-03-01' = {
   properties: {
     httpsOnly: true
     serverFarmId: appServicePlan.id
+    functionAppConfig: {
+      runtime: {
+        name: 'powershell'
+        version: '7.4'
+      }
+    }
     siteConfig: {
       use32BitWorkerProcess: false
       linuxFxVersion: 'PowerShell|7.4'
