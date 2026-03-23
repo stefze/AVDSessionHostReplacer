@@ -639,16 +639,16 @@
             },
             "AppPlanName": {
               "type": "string",
-              "defaultValue": "Y1",
+              "defaultValue": "FC1",
               "metadata": {
-                "description": "Required: No | App Service Plan Name | Default: Y1 for consumption based plan"
+                "description": "Required: No | App Service Plan SKU name | Default: FC1 for Flex Consumption plan"
               }
             },
             "AppPlanTier": {
               "type": "string",
-              "defaultValue": "Dynamic",
+              "defaultValue": "FlexConsumption",
               "metadata": {
-                "description": "Required: No | App Service Plan Tier | Default: Dynamic for consumption based plan"
+                "description": "Required: No | App Service Plan Tier | Default: FlexConsumption for Flex Consumption plan"
               }
             },
             "ReplacementPlanSettings": {
@@ -715,6 +715,8 @@
               "apiVersion": "2022-03-01",
               "name": "[variables('varAppServicePlanName')]",
               "location": "[parameters('Location')]",
+              "kind": "functionapp,linux",
+              "reserved": true,
               "sku": {
                 "name": "[parameters('AppPlanName')]",
                 "tier": "[parameters('AppPlanTier')]"
@@ -742,16 +744,15 @@
               "apiVersion": "2023-01-01",
               "name": "[parameters('FunctionAppName')]",
               "location": "[parameters('Location')]",
-              "kind": "functionApp",
+              "kind": "functionApp,linux",
               "identity": "[parameters('FunctionAppIdentity')]",
               "properties": {
                 "httpsOnly": true,
                 "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('varAppServicePlanName'))]",
                 "siteConfig": {
                   "use32BitWorkerProcess": false,
-                  "powerShellVersion": "7.4",
-                  "netFrameworkVersion": "v6.0",
-                  "appSettings": "[union(createArray(createObject('name', 'FUNCTIONS_EXTENSION_VERSION', 'value', '~4'), createObject('name', 'FUNCTIONS_WORKER_RUNTIME', 'value', 'powershell'), createObject('name', 'AzureWebJobs.timerTrigger1.Disabled', 'value', '1'), createObject('name', 'AzureWebJobsStorage', 'value', format('DefaultEndpointsProtocol=https;AccountName={0};EndpointSuffix={1};AccountKey={2}', variables('varStorageAccountName'), environment().suffixes.storage, listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('varStorageAccountName')), '2022-05-01').keys[0].value)), createObject('name', 'WEBSITE_CONTENTAZUREFILECONNECTIONSTRING', 'value', format('DefaultEndpointsProtocol=https;AccountName={0};EndpointSuffix={1};AccountKey={2}', variables('varStorageAccountName'), environment().suffixes.storage, listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('varStorageAccountName')), '2022-05-01').keys[0].value)), createObject('name', 'APPINSIGHTS_INSTRUMENTATIONKEY', 'value', reference(resourceId('Microsoft.Insights/components', variables('varAppServicePlanName')), '2020-02-02').InstrumentationKey), createObject('name', 'WEBSITE_CONTENTSHARE', 'value', toLower(parameters('FunctionAppName')))), if(parameters('EnableMonitoring'), createArray(createObject('name', 'APPINSIGHTS_INSTRUMENTATIONKEY', 'value', reference(resourceId('Microsoft.Insights/components', variables('varAppServicePlanName')), '2020-02-02').InstrumentationKey)), createArray()), parameters('ReplacementPlanSettings'))]",
+                  "linuxFxVersion": "PowerShell|7.4",
+                  "appSettings": "[union(createArray(createObject('name', 'FUNCTIONS_EXTENSION_VERSION', 'value', '~4'), createObject('name', 'FUNCTIONS_WORKER_RUNTIME', 'value', 'powershell'), createObject('name', 'AzureWebJobs.timerTrigger1.Disabled', 'value', '1'), createObject('name', 'AzureWebJobsStorage', 'value', format('DefaultEndpointsProtocol=https;AccountName={0};EndpointSuffix={1};AccountKey={2}', variables('varStorageAccountName'), environment().suffixes.storage, listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('varStorageAccountName')), '2022-05-01').keys[0].value)), createObject('name', 'APPINSIGHTS_INSTRUMENTATIONKEY', 'value', reference(resourceId('Microsoft.Insights/components', variables('varAppServicePlanName')), '2020-02-02').InstrumentationKey)), if(parameters('EnableMonitoring'), createArray(createObject('name', 'APPINSIGHTS_INSTRUMENTATIONKEY', 'value', reference(resourceId('Microsoft.Insights/components', variables('varAppServicePlanName')), '2020-02-02').InstrumentationKey)), createArray()), parameters('ReplacementPlanSettings'))]",
                   "ftpsState": "Disabled",
                   "cors": {
                     "allowedOrigins": [

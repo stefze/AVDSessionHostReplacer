@@ -23,11 +23,11 @@ param FunctionAppName string
 @description('Required: No | URL of the FunctionApp.zip file. This is the zip file containing the Function App code. | Default: The latest release of the Function App code.')
 param FunctionAppZipUrl string = 'https://github.com/Azure/AVDSessionHostReplacer/releases/download/v0.3.0/FunctionApp.zip'
 
-@description('Required: No | App Service Plan Name | Default: Y1 for consumption based plan')
-param AppPlanName string = 'Y1'
+@description('Required: No | App Service Plan SKU name | Default: FC1 for Flex Consumption plan')
+param AppPlanName string = 'FC1'
 
-@description('Required: No | App Service Plan Tier | Default: Dynamic for consumption based plan')
-param AppPlanTier string = 'Dynamic'
+@description('Required: No | App Service Plan Tier | Default: FlexConsumption for Flex Consumption plan')
+param AppPlanTier string = 'FlexConsumption'
 
 @description('''Required: Yes | The following settings are mandatory. Rest are optional.
 [
@@ -87,16 +87,8 @@ var varFunctionAppSettings = [
     value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccount.name};EndpointSuffix=${environment().suffixes.storage};AccountKey=${storageAccount.listKeys().keys[0].value}'
   }
   {
-    name: 'WEBSITE_CONTENTAZUREFILECONNECTIONSTRING'
-    value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccount.name};EndpointSuffix=${environment().suffixes.storage};AccountKey=${storageAccount.listKeys().keys[0].value}'
-  }
-  {
     name: 'APPINSIGHTS_INSTRUMENTATIONKEY'
     value: appInsights.properties.InstrumentationKey
-  }
-  {
-    name: 'WEBSITE_CONTENTSHARE'
-    value: toLower(FunctionAppName)
   }
 ]
 var varAppInsightsKey = EnableMonitoring ? [
@@ -143,9 +135,13 @@ resource deployLogAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2
 resource appServicePlan 'Microsoft.Web/serverfarms@2022-03-01' = {
   name: varAppServicePlanName
   location: Location
+  kind: 'functionapp,linux'
   sku: {
     name: AppPlanName
     tier: AppPlanTier
+  }
+  properties: {
+    reserved: true
   }
 }
 
@@ -166,15 +162,14 @@ resource appInsights 'Microsoft.Insights/components@2020-02-02' = if (EnableMoni
 resource functionApp 'Microsoft.Web/sites@2023-01-01' = {
   name: FunctionAppName
   location: Location
-  kind: 'functionApp'
+  kind: 'functionApp,linux'
   identity: FunctionAppIdentity
   properties: {
     httpsOnly: true
     serverFarmId: appServicePlan.id
     siteConfig: {
       use32BitWorkerProcess: false
-      powerShellVersion: '7.4'
-      netFrameworkVersion: 'v6.0'
+      linuxFxVersion: 'PowerShell|7.4'
       appSettings: varFunctionAppSettingsAndReplacementPlanSettings
       ftpsState: 'Disabled'
       cors: {
@@ -183,9 +178,10 @@ resource functionApp 'Microsoft.Web/sites@2023-01-01' = {
     }
   }
   resource deployFromZip 'extensions@2023-01-01' = {
-    name: 'MSDeploy'
+    name: 'onedeploy'
     properties: {
       packageUri: FunctionAppZipUrl
+      type: 'zip'
     }
   }
 }

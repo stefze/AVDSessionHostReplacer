@@ -28,9 +28,14 @@ catch {
     throw $_
 }
 
-# Authenticate with Azure PowerShell using MSI or user identity.
+# Authenticate with Azure PowerShell using managed identity.
+# Linux-based Function Apps expose IDENTITY_ENDPOINT/IDENTITY_HEADER, while
+# Windows often exposes MSI_SECRET.
+$hasManagedIdentity =
+    ($env:MSI_SECRET) -or
+    ((-not [string]::IsNullOrWhiteSpace($env:IDENTITY_ENDPOINT)) -and (-not [string]::IsNullOrWhiteSpace($env:IDENTITY_HEADER)))
 
-if ($env:MSI_SECRET) {
+if ($hasManagedIdentity) {
     Disable-AzContextAutosave -Scope Process | Out-Null
     if ([string]::IsNullOrEmpty( (Get-FunctionConfig _ClientId) ) ) {
         Write-PSFMessage -Level Host -Message "Authenticating with system assigned identity"
@@ -53,7 +58,7 @@ if ($env:MSI_SECRET) {
 }
 else {
     # This is for testing locally
-    Write-PSFMessage "MSI_Secret environment variable not found. This should only happen when testing locally. Otherwise confirm that a System or User Managed Identity is defined."
+    Write-PSFMessage "Managed identity environment variables were not found. This should only happen when testing locally. Otherwise confirm that a System or User Managed Identity is defined."
     Set-AzContext -SubscriptionId (Get-FunctionConfig _SubscriptionId)
 }
 $ErrorActionPreference = 'Stop'
