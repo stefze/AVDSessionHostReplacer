@@ -771,6 +771,9 @@
                       }
                     }
                   },
+                  "scaleAndConcurrency": {
+                    "instanceMemoryMB": 2048
+                  },
                   "runtime": {
                     "name": "powershell",
                     "version": "7.4"
