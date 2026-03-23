@@ -34,8 +34,10 @@ param SessionHostResourceGroupName string = ''
 @description('Required: Yes | Name of the Azure Virtual Desktop Host Pool.')
 param HostPoolName string
 
-@description('Required: No | URL of the FunctionApp.zip file. This is the zip file containing the Function App code. | Default: The latest release of the Function App code.')
-param FunctionAppZipUrl string = 'https://github.com/WillyMoselhy/AVDReplacementPlans/releases/download/v0.1.5/FunctionApp.zip' // TODO - Update this to the new URL under Azure Org
+@description('Required: No | URL of the FunctionApp.zip package. By default, this is derived from the current template URL so it follows the deployed repo branch automatically.')
+param FunctionAppZipUrl string = contains(deployment().properties, 'templateLink') && !empty(deployment().properties.templateLink.uri)
+  ? uri(replace(split(deployment().properties.templateLink.uri, '?')[0], 'DeployAVDSessionHostReplacer.json', ''), '../../FunctionApp/FunctionApp.zip')
+  : 'https://github.com/WillyMoselhy/AVDReplacementPlans/releases/download/v0.1.5/FunctionApp.zip'
 
 @description('Required: No | If true, will apply tags for Include In Auto Replace and Deployment Timestamp to existing session hosts. This will not enable automatic deletion of existing session hosts. | Default: True.')
 param FixSessionHostTags bool = true

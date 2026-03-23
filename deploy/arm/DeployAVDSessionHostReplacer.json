@@ -333,6 +333,13 @@
         "description": "Required: No | Leave this empty to deploy to same resource group as the host pool."
       }
     },
+    "FunctionAppUrl": {
+      "type": "string",
+      "defaultValue": "[if(and(contains(deployment().properties, 'templateLink'), not(empty(deployment().properties.templateLink.uri))), uri(replace(split(deployment().properties.templateLink.uri, '?')[0], 'DeployAVDSessionHostReplacer.json', ''), '../../FunctionApp/FunctionApp.zip'), 'https://github.com/WillyMoselhy/AVDReplacementPlans/releases/download/v0.1.5/FunctionApp.zip')]",
+      "metadata": {
+        "description": "Required: No | URL of the FunctionApp.zip package. By default, this is derived from the current template URL so it follows the deployed repo branch automatically."
+      }
+    },
     "TimeStamp": {
       "type": "string",
       "defaultValue": "[utcNow()]"
@@ -443,6 +450,9 @@
           },
           "FunctionAppName": {
             "value": "[variables('varFunctionAppName')]"
+          },
+          "FunctionAppUrl": {
+            "value": "[parameters('FunctionAppUrl')]"
           },
           "EnableMonitoring": {
             "value": "[parameters('EnableMonitoring')]"
@@ -622,7 +632,7 @@
             },
             "FunctionAppUrl": {
               "type": "string",
-              "defaultValue": "https://github.com/stefze/AVDSessionHostReplacer/blob/main/FunctionApp/FunctionApp.zip",
+              "defaultValue": "https://github.com/WillyMoselhy/AVDReplacementPlans/releases/download/v0.1.5/FunctionApp.zip",
               "metadata": {
                 "description": "Required: No | URL of the FunctionApp.zip file. This is the zip file containing the Function App code. | Default: The latest release of the Function App code."
               }
