@@ -335,7 +335,7 @@
     },
     "FunctionAppUrl": {
       "type": "string",
-      "defaultValue": "[if(and(contains(deployment().properties, 'templateLink'), not(empty(deployment().properties.templateLink.uri))), uri(replace(split(deployment().properties.templateLink.uri, '?')[0], 'DeployAVDSessionHostReplacer.json', ''), '../../FunctionApp/FunctionApp.zip'), 'https://raw.githubusercontent.com/stefze/AVDSessionHostReplacer/migration/FunctionApp/FunctionApp.zip')]",
+      "defaultValue": "[if(and(contains(deployment().properties, 'templateLink'), not(empty(deployment().properties.templateLink.uri))), uri(replace(split(deployment().properties.templateLink.uri, '?')[0], 'DeployAVDSessionHostReplacer.json', ''), '../../FunctionApp/FunctionApp.zip'), 'https://raw.githubusercontent.com/stefze/AVDSessionHostReplacer/migration/deploy/zip/FunctionApp.zip')]",
       "metadata": {
         "description": "Required: No | URL of the FunctionApp.zip package. By default, this is derived from the current template URL so it follows the deployed repo branch automatically."
       }
@@ -632,7 +632,7 @@
             },
             "FunctionAppUrl": {
               "type": "string",
-              "defaultValue": "https://raw.githubusercontent.com/stefze/AVDSessionHostReplacer/migration/FunctionApp/FunctionApp.zip",
+              "defaultValue": "https://raw.githubusercontent.com/stefze/AVDSessionHostReplacer/migration/deploy/zip/FunctionApp.zip",
               "metadata": {
                 "description": "Required: No | URL of the FunctionApp.zip file. This is the zip file containing the Function App code. | Default: The latest release of the Function App code."
               }
