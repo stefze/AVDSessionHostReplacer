@@ -716,10 +716,12 @@
               "name": "[variables('varAppServicePlanName')]",
               "location": "[parameters('Location')]",
               "kind": "functionapp,linux",
-              "reserved": true,
               "sku": {
                 "name": "[parameters('AppPlanName')]",
                 "tier": "[parameters('AppPlanTier')]"
+              },
+              "properties": {
+                "reserved": true
               }
             },
             {
