@@ -679,7 +679,8 @@
               "apiVersion": "2023-01-01",
               "name": "[format('{0}/{1}', parameters('FunctionAppName'), 'onedeploy')]",
               "properties": {
-                "packageUri": "[parameters('FunctionAppUrl')]"
+                "packageUri": "[parameters('FunctionAppUrl')]",
+                "type": "zip"
               },
               "dependsOn": [
                 "[resourceId('Microsoft.Web/sites', parameters('FunctionAppName'))]"
