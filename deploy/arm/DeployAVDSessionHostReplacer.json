@@ -677,7 +677,7 @@
             {
               "type": "Microsoft.Web/sites/extensions",
               "apiVersion": "2023-01-01",
-              "name": "[format('{0}/{1}', parameters('FunctionAppName'), 'MSDeploy')]",
+              "name": "[format('{0}/{1}', parameters('FunctionAppName'), 'onedeploy')]",
               "properties": {
                 "packageUri": "[parameters('FunctionAppUrl')]"
               },
