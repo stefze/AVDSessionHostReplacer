@@ -110,6 +110,10 @@ var varFunctionAppSettings = [
     value: 'powershell'
   }
   {
+    name: 'AzureWebJobs.timerTrigger1.Disabled'
+    value: '1'
+  }
+  {
     name: 'AzureWebJobsStorage'
     value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccount.name};EndpointSuffix=${environment().suffixes.storage};AccountKey=${storageAccount.listKeys().keys[0].value}'
   }
