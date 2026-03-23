@@ -28,6 +28,9 @@ function Remove-SHRSessionHost {
 
     )
 
+    Write-PSFMessage -Level Warning -Message 'Remove-SHRSessionHost is disabled. No drain or delete actions will be performed.'
+    return
+
     foreach ($sessionHost in $SessionHostsPendingDelete) {
         # Does the session host currently have sessions?
         # No sessions => Delete + Remove from host pool

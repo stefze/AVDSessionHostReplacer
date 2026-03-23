@@ -34,15 +34,58 @@ function Get-SHRHostPoolDecision {
 
         # Delay days before replacing session hosts on new image version
         [Parameter()]
-        [int] $ReplaceSessionHostOnNewImageVersionDelayDays = (Get-FunctionConfig _ReplaceSessionHostOnNewImageVersionDelayDays)
+        [int] $ReplaceSessionHostOnNewImageVersionDelayDays = (Get-FunctionConfig _ReplaceSessionHostOnNewImageVersionDelayDays),
+
+        # Minimum numeric suffix for session hosts managed by this function.
+        [Parameter()]
+        [int] $ManagedSessionHostMinSuffix = (Get-FunctionConfig _ManagedSessionHostMinSuffix)
     )
+
+    function Get-SHRSessionHostNumericSuffix {
+        param(
+            [Parameter(Mandatory = $true)]
+            [string] $VMName
+        )
+
+        $suffixMatch = [regex]::Match($VMName, '(\d+)$')
+        if (-not $suffixMatch.Success) {
+            return $null
+        }
+
+        [int]$suffixMatch.Groups[1].Value
+    }
+
     # Basic Info
     Write-PSFMessage -Level Host -Message "We have {0} session hosts (included in Automation)" -StringValues $SessionHosts.Count
 
-    [array] $deletionEligibleSessionHosts = $SessionHosts | Where-Object { [string]::IsNullOrWhiteSpace($_.AssignedUser) }
+    [array] $managedSessionHosts = foreach ($sessionHost in $SessionHosts) {
+        $numericSuffix = Get-SHRSessionHostNumericSuffix -VMName $sessionHost.VMName
+        if ($null -eq $numericSuffix -or $numericSuffix -ge $ManagedSessionHostMinSuffix) {
+            $sessionHost
+        }
+    }
+
+    [array] $legacySessionHosts = foreach ($sessionHost in $SessionHosts) {
+        $numericSuffix = Get-SHRSessionHostNumericSuffix -VMName $sessionHost.VMName
+        if ($null -ne $numericSuffix -and $numericSuffix -lt $ManagedSessionHostMinSuffix) {
+            $sessionHost
+        }
+    }
+
+    Write-PSFMessage -Level Host -Message "Managed session host suffix baseline is {0}" -StringValues $ManagedSessionHostMinSuffix
+    Write-PSFMessage -Level Host -Message "Found {0} managed session hosts (suffix >= baseline or non-numeric suffix)." -StringValues $managedSessionHosts.Count
+    Write-PSFMessage -Level Host -Message "Ignoring {0} legacy session hosts with suffix below baseline for deployment count evaluation." -StringValues $legacySessionHosts.Count
+
+    [array] $managedRunningDeployments = foreach ($runningSessionHostName in $RunningDeployments.SessionHostNames) {
+        $numericSuffix = Get-SHRSessionHostNumericSuffix -VMName $runningSessionHostName
+        if ($null -eq $numericSuffix -or $numericSuffix -ge $ManagedSessionHostMinSuffix) {
+            $runningSessionHostName
+        }
+    }
+
+    [array] $deletionEligibleSessionHosts = $managedSessionHosts | Where-Object { [string]::IsNullOrWhiteSpace($_.AssignedUser) }
     [array] $assignedSessionHosts = $SessionHosts | Where-Object { -not [string]::IsNullOrWhiteSpace($_.AssignedUser) }
-    Write-PSFMessage -Level Host -Message "Found {0} session hosts assigned to users. These hosts are excluded from removal." -StringValues $assignedSessionHosts.Count
-    Write-PSFMessage -Level Host -Message "Found {0} session hosts eligible for removal." -StringValues $deletionEligibleSessionHosts.Count
+    Write-PSFMessage -Level Host -Message "Found {0} session hosts assigned to users." -StringValues $assignedSessionHosts.Count
 
     # Identify Session hosts that should be replaced
     if ($TargetVMAgeDays -gt 0) {
@@ -67,18 +110,17 @@ function Get-SHRHostPoolDecision {
 
     # Good Session Hosts
 
-    $goodSessionHosts = $SessionHosts | Where-Object { $_.VMName -notin $sessionHostsToReplace.VMName }
-    $sessionHostsCurrentTotal = ([array]$goodSessionHosts.VMName + [array]$runningDeployments.SessionHostNames ) | Select-Object -Unique
+    $managedSessionHostsCurrentTotal = ([array]$managedSessionHosts.VMName + [array]$managedRunningDeployments ) | Select-Object -Unique
 
-    Write-PSFMessage -Level Host -Message "We have {0} good session hosts including {1} session hosts being deployed" -StringValues $sessionHostsCurrentTotal.Count, $runningDeployments.SessionHostNames.Count
+    Write-PSFMessage -Level Host -Message "We have {0} managed session hosts including {1} managed session hosts being deployed" -StringValues $managedSessionHostsCurrentTotal.Count, $managedRunningDeployments.Count
     Write-PSFMessage -Level Host -Message "We target having {0} session hosts in good shape" -StringValues $TargetSessionHostCount
     Write-PSFMessage -Level Host -Message "We have a buffer of {0} session hosts more than the target." -StringValues $TargetSessionHostBuffer
 
-    $weCanDeployUpTo = $TargetSessionHostCount + $TargetSessionHostBuffer - $SessionHosts.count - $RunningDeployments.SessionHostNames.Count
+    $weCanDeployUpTo = $TargetSessionHostCount + $TargetSessionHostBuffer - $managedSessionHosts.count - $managedRunningDeployments.Count
     if ($weCanDeployUpTo -ge 0) {
         Write-PSFMessage -Level Host -Message "We can deploy up to {0} session hosts" -StringValues $weCanDeployUpTo
 
-        $weNeedToDeploy = $TargetSessionHostCount - $sessionHostsCurrentTotal.Count
+        $weNeedToDeploy = $TargetSessionHostCount - $managedSessionHostsCurrentTotal.Count
         if ($weNeedToDeploy -gt 0) {
             Write-PSFMessage -Level Host -Message "We need to deploy {0} new session hosts" -StringValues $weNeedToDeploy
             $weCanDeploy = if ($weNeedToDeploy -gt $weCanDeployUpTo) { $weCanDeployUpTo } else { $weNeedToDeploy } # If we need to deploy 10 machines, and we can deploy 5, we should only deploy 5.
@@ -96,43 +138,14 @@ function Get-SHRHostPoolDecision {
 
 
     $weCanDelete = 0
-    $requestedDeleteCount = $SessionHosts.Count - $TargetSessionHostCount
-    if ($requestedDeleteCount -gt 0) {
-        Write-PSFMessage -Level Host -Message "We need to delete {0} session hosts" -StringValues $requestedDeleteCount
-
-        $weCanDelete = [Math]::Min($requestedDeleteCount, $deletionEligibleSessionHosts.Count)
-        if ($weCanDelete -lt $requestedDeleteCount) {
-            Write-PSFMessage -Level Warning -Message "Can only delete {0} session hosts because {1} hosts are assigned to users and protected from removal." -StringValues $weCanDelete, ($requestedDeleteCount - $weCanDelete)
-        }
-
-        if ($weCanDelete -gt $sessionHostsToReplace.Count) {
-            Write-PSFMessage -Level Host -Message "Host pool is over populated"
-
-            $goodSessionHostsToDeleteCount = $weCanDelete - $sessionHostsToReplace.Count
-            Write-PSFMessage -Level Host -Message "We will delete {0} good session hosts" -StringValues $goodSessionHostsToDeleteCount
-
-            $selectedGoodHostsTotDelete = [array] ($goodSessionHosts | Where-Object { [string]::IsNullOrWhiteSpace($_.AssignedUser) } | Sort-Object -Property Session | Select-Object -First $goodSessionHostsToDeleteCount)
-            Write-PSFMessage -Level Host -Message "Selected the following good session hosts to delete: {0}" -StringValues ($selectedGoodHostsTotDelete.VMName -join ',')
-        }
-        else {
-            $selectedGoodHostsTotDelete = @()
-            Write-PSFMessage -Level Host -Message "Host pool is not over populated"
-        }
-
-        $sessionHostsPendingDelete = ($sessionHostsToReplace + $selectedGoodHostsTotDelete) | Select-Object -First $weCanDelete
-        Write-PSFMessage -Level Host -Message "The following Session Hosts are now pending delete: {0}" -StringValues ($SessionHostsPendingDelete.VMName -join ',')
-
-    }
-    elseif ($sessionHostsToReplace.Count -gt 0) {
-        Write-PSFMessage -Level Host -Message "We need to delete {0} session hosts but we don't have enough session hosts in the host pool." -StringValues ($sessionHostsToReplace.Count)
-    }
-    else { Write-PSFMessage -Level Host -Message "We do not need to delete any session hosts" }
+    $sessionHostsPendingDelete = @()
+    Write-PSFMessage -Level Host -Message "Session host decommissioning is disabled. No session hosts will be deleted."
 
 
     [PSCustomObject]@{
         PossibleDeploymentsCount       = $weCanDeploy
         PossibleSessionHostDeleteCount = $weCanDelete
         SessionHostsPendingDelete      = $sessionHostsPendingDelete
-        ExistingSessionHostVMNames     = ([array]$SessionHosts.VMName + [array]$runningDeployments.SessionHostNames) | Select-Object -Unique
+        ExistingSessionHostVMNames     = ([array]$SessionHosts.VMName + [array]$managedRunningDeployments) | Select-Object -Unique
     }
 }

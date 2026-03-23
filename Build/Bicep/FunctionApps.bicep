@@ -82,6 +82,9 @@ param SubnetId string
 @description('Required: No | Number of digits to use for the instance number of the session hosts (eg. AVDVM-01). | Default: 2')
 param SessionHostInstanceNumberPadding int = 2
 
+@description('Required: No | Minimum numeric suffix for managed session hosts. Hosts below this suffix are ignored when calculating how many new hosts to deploy. | Default: 1025')
+param ManagedSessionHostMinSuffix int = 1025
+
 @description('Required: No | If true, will replace session hosts when a new image version is detected. | Default: true')
 param ReplaceSessionHostOnNewImageVersion bool = true
 
@@ -169,6 +172,10 @@ var varFunctionAppSettings = [
   {
     name: '_SessionHostInstanceNumberPadding'
     value: SessionHostInstanceNumberPadding
+  }
+  {
+    name: '_ManagedSessionHostMinSuffix'
+    value: ManagedSessionHostMinSuffix
   }
   {
     name: '_TargetSessionHostCount'

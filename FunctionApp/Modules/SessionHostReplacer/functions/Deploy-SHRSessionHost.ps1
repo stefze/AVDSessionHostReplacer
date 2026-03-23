@@ -26,6 +26,9 @@ function Deploy-SHRSessionHost {
         [int] $SessionHostInstanceNumberPadding = (Get-FunctionConfig _SessionHostInstanceNumberPadding),
 
         [Parameter()]
+        [int] $ManagedSessionHostMinSuffix = (Get-FunctionConfig _ManagedSessionHostMinSuffix),
+
+        [Parameter()]
         [string] $DeploymentPrefix = (Get-FunctionConfig _SHRDeploymentPrefix),
 
 
@@ -51,13 +54,14 @@ function Deploy-SHRSessionHost {
 
     # Calculate Session Host Names
     Write-PSFMessage -Level Host -Message "Existing session host VM names: {0}" -StringValues ($ExistingSessionHostVMNames -join ',')
+    $vmNumber = [Math]::Max(1, $ManagedSessionHostMinSuffix)
     [array] $sessionHostNames = for ($i = 0; $i -lt $NewSessionHostsCount; $i++) {
-        $vmNumber = 1
         While (("$SessionHostNamePrefix$SessionHostNameSeparator{0:d$SessionHostInstanceNumberPadding}" -f $vmNumber) -in $ExistingSessionHostVMNames) {
             $vmNumber++
         }
         $vmName = "$SessionHostNamePrefix$SessionHostNameSeparator{0:d$SessionHostInstanceNumberPadding}" -f $vmNumber
         $ExistingSessionHostVMNames += $vmName
+        $vmNumber++
         $vmName
     }
     Write-PSFMessage -Level Host -Message "Creating session host(s) {0}" -StringValues ($sessionHostNames -join ',')

@@ -50,14 +50,8 @@ if ($hostPoolDecisions.PossibleDeploymentsCount -gt 0) {
     Deploy-SHRSessionHost -SessionHostResourceGroupName $sessionHostResourceGroupName -NewSessionHostsCount $hostPoolDecisions.PossibleDeploymentsCount -ExistingSessionHostVMNames $existingSessionHostVMNames
 }
 
-# Delete session hosts
-if ($hostPoolDecisions.PossibleSessionHostDeleteCount -gt 0 -and $hostPoolDecisions.SessionHostsPendingDelete.Count -gt 0) {
-    Write-PSFMessage -Level Host -Message "We will decommission {0} session hosts from this list: {1}" -StringValues $hostPoolDecisions.SessionHostsPendingDelete.Count, ($hostPoolDecisions.SessionHostsPendingDelete.VMName -join ',')
-    # Decommission session hosts
-    $removeEntraDevice = Get-FunctionConfig _RemoveEntraDevice
-    $removeIntuneDevice = Get-FunctionConfig _RemoveIntuneDevice
-    Remove-SHRSessionHost -SessionHostsPendingDelete $hostPoolDecisions.SessionHostsPendingDelete -RemoveEntraDevice $removeEntraDevice -RemoveIntuneDevice $removeIntuneDevice
-}
+# Delete session hosts capability is intentionally disabled.
+Write-PSFMessage -Level Host -Message "Session host decommissioning is disabled by configuration and no delete actions will be taken."
 
 
 # Write an information log with the current time.
