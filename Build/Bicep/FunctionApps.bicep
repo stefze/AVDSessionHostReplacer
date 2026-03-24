@@ -321,6 +321,17 @@ resource functionApp 'Microsoft.Web/sites@2024-04-01' = {
     }
   }
 }
+
+resource functionAppDeployFromUrl 'Microsoft.Web/sites/extensions@2023-01-01' = {
+  name: '${FunctionAppName}/onedeploy'
+  properties: {
+    packageUri: FunctionAppZipUrl
+    type: 'zip'
+  }
+  dependsOn: [
+    functionApp
+  ]
+}
 //------//
 
 module RBACFunctionApphasDesktopVirtualizationVirtualMachineContributor 'modules/RBACRoleAssignment.bicep' = {
