@@ -772,7 +772,8 @@
                     }
                   },
                   "scaleAndConcurrency": {
-                    "instanceMemoryMB": 2048
+                    "instanceMemoryMB": 2048,
+                    "maximumInstanceCount": 100
                   },
                   "runtime": {
                     "name": "powershell",
