@@ -9,10 +9,42 @@
 # You can define helper functions, run commands, or specify environment variables
 # NOTE: any variables defined that are not environment variables will get reset after the first execution
 
-Import-Module 'PSFrameWork' , 'Az.Resources' , 'Az.Compute' , 'Az.DesktopVirtualization', 'SessionHostReplacer', 'AzureFunctionConfiguration' -ErrorAction Stop
+Import-Module 'Az.Resources' , 'Az.Compute' , 'Az.DesktopVirtualization', 'SessionHostReplacer', 'AzureFunctionConfiguration' -ErrorAction Stop
 
-# Configure PSFramework settings
-Set-PSFConfig -FullName PSFramework.Message.style.NoColor -Value $true #This is required for logs to look good in FunctionApp Logs
+try {
+    Import-Module 'PSFramework' -ErrorAction Stop
+}
+catch {
+    # Flex Linux may not provide managed dependencies; use a lightweight fallback logger.
+    function global:Write-PSFMessage {
+        [CmdletBinding()]
+        param(
+            [Parameter(Position = 0)]
+            [string]$Message,
+
+            [string]$Level = 'Host',
+
+            [object[]]$StringValues
+        )
+
+        if ($StringValues) {
+            $Message = [string]::Format($Message, $StringValues)
+        }
+
+        switch ($Level.ToLowerInvariant()) {
+            'error' { Write-Error $Message }
+            'warning' { Write-Warning $Message }
+            default { Write-Host $Message }
+        }
+    }
+
+    Write-Warning "PSFramework module was not found. Using fallback Write-PSFMessage implementation."
+}
+
+# Configure PSFramework settings only when available
+if (Get-Command Set-PSFConfig -ErrorAction SilentlyContinue) {
+    Set-PSFConfig -FullName PSFramework.Message.style.NoColor -Value $true #This is required for logs to look good in FunctionApp Logs
+}
 
 ## Version Banner ## Updated by Build\Build-Zip-File.ps1
 
