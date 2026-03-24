@@ -194,7 +194,6 @@ resource functionApp 'Microsoft.Web/sites@2024-04-01' = {
     }
     siteConfig: {
       use32BitWorkerProcess: false
-      linuxFxVersion: 'PowerShell|7.4'
       appSettings: varFunctionAppSettingsAndReplacementPlanSettings
       ftpsState: 'Disabled'
       cors: {
