@@ -108,10 +108,6 @@ var varFunctionAppSettings = [
     value: '~4'
   }
   {
-    name: 'FUNCTIONS_WORKER_RUNTIME'
-    value: 'powershell'
-  }
-  {
     name: 'AzureWebJobs.timerTrigger1.Disabled'
     value: '1'
   }
@@ -322,13 +318,6 @@ resource functionApp 'Microsoft.Web/sites@2024-04-01' = {
       use32BitWorkerProcess: false
       appSettings: varFunctionAppSettings
       ftpsState: 'Disabled'
-    }
-  }
-  resource deployFromZip 'extensions@2022-03-01' = {
-    name: 'onedeploy'
-    properties: {
-      packageUri: FunctionAppZipUrl
-      type: 'zip'
     }
   }
 }

@@ -79,10 +79,6 @@ var varFunctionAppSettings = [
     value: '~4'
   }
   {
-    name: 'FUNCTIONS_WORKER_RUNTIME'
-    value: 'powershell'
-  }
-  {
     name: 'AzureWebJobsStorage'
     value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccount.name};EndpointSuffix=${environment().suffixes.storage};AccountKey=${storageAccount.listKeys().keys[0].value}'
   }
@@ -199,13 +195,6 @@ resource functionApp 'Microsoft.Web/sites@2024-04-01' = {
       cors: {
         allowedOrigins: [ 'https://portal.azure.com' ]
       }
-    }
-  }
-  resource deployFromZip 'extensions@2023-01-01' = {
-    name: 'onedeploy'
-    properties: {
-      packageUri: FunctionAppZipUrl
-      type: 'zip'
     }
   }
 }

@@ -676,18 +676,6 @@
           },
           "resources": [
             {
-              "type": "Microsoft.Web/sites/extensions",
-              "apiVersion": "2023-01-01",
-              "name": "[format('{0}/{1}', parameters('FunctionAppName'), 'onedeploy')]",
-              "properties": {
-                "packageUri": "[parameters('FunctionAppUrl')]",
-                "type": "zip"
-              },
-              "dependsOn": [
-                "[resourceId('Microsoft.Web/sites', parameters('FunctionAppName'))]"
-              ]
-            },
-            {
               "type": "Microsoft.Storage/storageAccounts",
               "apiVersion": "2022-05-01",
               "name": "[variables('varStorageAccountName')]",
@@ -782,7 +770,7 @@
                 },
                 "siteConfig": {
                   "use32BitWorkerProcess": false,
-                  "appSettings": "[union(createArray(createObject('name', 'FUNCTIONS_EXTENSION_VERSION', 'value', '~4'), createObject('name', 'FUNCTIONS_WORKER_RUNTIME', 'value', 'powershell'), createObject('name', 'AzureWebJobs.timerTrigger1.Disabled', 'value', '1'), createObject('name', 'AzureWebJobsStorage', 'value', format('DefaultEndpointsProtocol=https;AccountName={0};EndpointSuffix={1};AccountKey={2}', variables('varStorageAccountName'), environment().suffixes.storage, listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('varStorageAccountName')), '2022-05-01').keys[0].value)), createObject('name', 'APPINSIGHTS_INSTRUMENTATIONKEY', 'value', reference(resourceId('Microsoft.Insights/components', variables('varAppServicePlanName')), '2020-02-02').InstrumentationKey)), if(parameters('EnableMonitoring'), createArray(createObject('name', 'APPINSIGHTS_INSTRUMENTATIONKEY', 'value', reference(resourceId('Microsoft.Insights/components', variables('varAppServicePlanName')), '2020-02-02').InstrumentationKey)), createArray()), parameters('ReplacementPlanSettings'))]",
+                  "appSettings": "[union(createArray(createObject('name', 'FUNCTIONS_EXTENSION_VERSION', 'value', '~4'), createObject('name', 'AzureWebJobs.timerTrigger1.Disabled', 'value', '1'), createObject('name', 'AzureWebJobsStorage', 'value', format('DefaultEndpointsProtocol=https;AccountName={0};EndpointSuffix={1};AccountKey={2}', variables('varStorageAccountName'), environment().suffixes.storage, listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('varStorageAccountName')), '2022-05-01').keys[0].value)), createObject('name', 'APPINSIGHTS_INSTRUMENTATIONKEY', 'value', reference(resourceId('Microsoft.Insights/components', variables('varAppServicePlanName')), '2020-02-02').InstrumentationKey)), if(parameters('EnableMonitoring'), createArray(createObject('name', 'APPINSIGHTS_INSTRUMENTATIONKEY', 'value', reference(resourceId('Microsoft.Insights/components', variables('varAppServicePlanName')), '2020-02-02').InstrumentationKey)), createArray()), parameters('ReplacementPlanSettings'))]",
                   "ftpsState": "Disabled",
                   "cors": {
                     "allowedOrigins": [
