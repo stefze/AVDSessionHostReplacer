@@ -202,7 +202,7 @@
 							"type": "Microsoft.Solutions.ArmApiControl",
 							"request": {
 								"method": "GET",
-								"path": "[concat(steps('basics').resourceScope.subscription.id,'/providers/Microsoft.Compute/resourceTypes?api-version=2022-01-01')]"
+								"path": "[concat(steps('basics').resourceScope.subscription.subscriptionId,'/providers/Microsoft.Compute/resourceTypes?api-version=2022-01-01')]"
 							}
 						},
 						{
