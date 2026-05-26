@@ -23,20 +23,45 @@ Detailed instructions on the required permissions and how to assign them are ava
 
 ## How it works?
 
-There are two criteria for deploying refreshed session hosts,
+There are two criteria for deploying refreshed session hosts:
+
 1. **Image Version:** Is there a new image version available? If so, we create a new session host with the new image version. This can be from Marketplace or Gallery Image Definition.
 2. **Session Host VM Age:** If a managed session host is older than a certain age (default is 45 days), we create a new session host.
 
-The core of an AVD Session Host Replacer is an Azure Function App built using PowerShell, the function is triggered every hour to check each session host against the above criteria.
+The core of an AVD Session Host Replacer is an Azure Function App built using PowerShell. The function is triggered every hour to check each session host against the above criteria.
 
 To deploy new session hosts, the function uses an ARM Template that is stored as a Template Spec at deployment time.
 
-Session host decommissioning is disabled. The function does not drain, remove, or delete existing session hosts.
+### Add-Only Behavior
 
-Only managed session hosts are counted toward `_TargetSessionHostCount`.
-The managed baseline is controlled by `_ManagedSessionHostMinSuffix` (default `1025`).
-Session hosts with a numeric suffix lower than this value are ignored when calculating how many new hosts to deploy.
-New session hosts start at this suffix baseline and fill available gaps in the managed range.
+**Session host decommissioning is completely disabled.** The function will only add new session hosts and will never:
+- Drain existing session hosts
+- Delete or remove existing session hosts  
+- Modify existing session hosts
+- Apply scaling-plan exclusion tags for pending deletion
+
+All session host removal and cleanup must be performed manually by administrators.
+
+### Managed vs. Legacy Session Hosts
+
+The function distinguishes between "managed" and "legacy" session hosts based on their numeric suffix:
+
+- **Managed Session Hosts:** Session hosts with a numeric suffix >= `_ManagedSessionHostMinSuffix` (default `1025`)
+- **Legacy Session Hosts:** Session hosts with a numeric suffix < `_ManagedSessionHostMinSuffix`
+
+**Only managed session hosts are counted toward `_TargetSessionHostCount`.**
+
+The `_ManagedSessionHostMinSuffix` parameter allows you to have pre-existing "legacy" session hosts that are completely ignored by the automation. This is useful when migrating from manual deployments or when you want to maintain some session hosts outside of automation.
+
+**Example:**
+- `_ManagedSessionHostMinSuffix` = `1025` (default)
+- `_TargetSessionHostCount` = `5`
+- Existing hosts: `AVDVM-0001`, `AVDVM-0002`, `AVDVM-1025`, `AVDVM-1027`
+
+In this scenario:
+- Legacy hosts (`0001`, `0002`) are ignored and not counted
+- Only managed hosts (`1025`, `1027`) are counted = 2 hosts
+- The function will deploy 3 new hosts to reach the target of 5: `AVDVM-1026`, `AVDVM-1028`, `AVDVM-1029`
 
 ## FAQ
 - **Can I use a custom Template Spec for Session Hosts deployment?**
@@ -67,13 +92,44 @@ New session hosts start at this suffix baseline and fill available gaps in the m
 
 - **How does target host count work with legacy host names?**
 
-    The setting `_ManagedSessionHostMinSuffix` (default `1025`) defines the lowest numeric suffix included in target count calculations.
+    The `_ManagedSessionHostMinSuffix` parameter (default `1025`) defines which session hosts are managed by the automation. Only session hosts with a numeric suffix greater than or equal to this value are counted toward the `_TargetSessionHostCount`.
 
-    Example: If `_TargetSessionHostCount` is `5` and existing suffixes are `0231`, `0678`, `0976`, `1025`, `1027`, then only `1025` and `1027` are counted, and the function deploys `3` new hosts: `1026`, `1028`, `1029`.
+    This allows you to have pre-existing "legacy" session hosts that are completely ignored by the automation, enabling a smooth migration from manual deployments.
+
+    **Example:** If `_TargetSessionHostCount` is `5` and existing suffixes are `0231`, `0678`, `0976`, `1025`, `1027`:
+    - Legacy hosts (`0231`, `0678`, `0976`) are ignored
+    - Only managed hosts (`1025`, `1027`) are counted = 2 hosts  
+    - The function deploys 3 new hosts: `1026`, `1028`, `1029`
+
+    See the [Managed vs. Legacy Session Hosts](#managed-vs-legacy-session-hosts) section for more details.
+
+- **Can I change the managed session host baseline after initial deployment?**
+
+    Yes, you can change the `_ManagedSessionHostMinSuffix` parameter by redeploying the Session Host Replacer with a new value. However, be aware that:
+    - Increasing the value will exclude some previously managed hosts from the target count
+    - Decreasing the value will include previously ignored hosts in the target count
+    - This change only affects counting; existing hosts are never modified or deleted
 
 - **What about AVD Scaling Plans?**
 
-    Because decommissioning is disabled, the function does not place hosts in drain mode and does not apply scaling-plan exclusion tags for pending deletion.
+    Since session host decommissioning is completely disabled, the function never places hosts in drain mode and never applies scaling-plan exclusion tags. All session hosts remain fully available to the scaling plan.
+
+    If you want to decommission old session hosts, you must manually:
+    1. Enable drain mode on the session host
+    2. Wait for user sessions to end
+    3. Remove the session host from the host pool
+    4. Delete the VM and associated resources
+
+- **How do I remove old session hosts?**
+
+    Session host removal must be performed manually. The recommended steps are:
+    1. In the Azure Portal, navigate to the host pool
+    2. Select the session host you want to remove
+    3. Turn on "Drain mode" to prevent new connections
+    4. Wait for existing user sessions to end (or notify users)
+    5. Delete the session host from the host pool
+    6. Delete the VM and associated resources (disk, NIC)
+    7. If Entra ID joined, remove the device from Entra ID
 
 - **What happens if a deployment fails?**
 

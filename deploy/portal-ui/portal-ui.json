@@ -70,6 +70,21 @@
 									"visible": true
 								},
 								{
+									"name": "ManagedSessionHostMinSuffix",
+									"type": "Microsoft.Common.Slider",
+									"min": 0,
+									"max": 9999,
+									"label": "Managed Session Host Minimum Suffix",
+									"subLabel": "Suffix",
+									"defaultValue": 1025,
+									"showStepMarkers": false,
+									"toolTip": "<p>Minimum numeric suffix for session hosts managed by this function.</p><p>Only session hosts with a numeric suffix greater than or equal to this value are counted toward the target count.</p><p>This allows you to have legacy session hosts (with lower suffixes) that are ignored by the automation.</p><p><strong>Example:</strong></p><p>If set to 1025, hosts like AVDVM-0001 through AVDVM-1024 are ignored, and only AVDVM-1025 and above are managed.</p>",
+									"constraints": {
+										"required": true
+									},
+									"visible": true
+								},
+								{
 									"name": "IncludePreExistingSessionHosts",
 									"type": "Microsoft.Common.CheckBox",
 									"label": "Include pre-existing session hosts",
@@ -809,6 +824,7 @@
 				"UserAssignedManagedIdentityResourceId": "[if(steps('basics').IdentitySection.UseUserAssignedManagedIdentity, steps('basics').IdentitySection.UserAssignedManagedIdentitySelector.id, '')]",
 				"TargetSessionHostCount": "[steps('basics').HostPoolSettingsSection.TargetSessionHostCount]",
 				"TargetSessionHostBuffer": "[steps('basics').HostPoolSettingsSection.TargetSessionHostBuffer]",
+				"ManagedSessionHostMinSuffix": "[steps('basics').HostPoolSettingsSection.ManagedSessionHostMinSuffix]",
 				"EnableMonitoring": "[steps('basics').MonitoringSection.EnableMonitoring]",
 				"UseExistingLAW": "[steps('basics').MonitoringSection.UseExistingLAW]",
 				"LogAnalyticsWorkspaceId": "[if(steps('basics').MonitoringSection.UseExistingLAW, steps('basics').MonitoringSection.LAWSelector.id, '')]",

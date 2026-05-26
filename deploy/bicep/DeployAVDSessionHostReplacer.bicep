@@ -143,6 +143,10 @@ param VMNamesTemplateParameterName string = 'VMNames'
 @description('Required: No | Leave this empty to deploy to same resource group as the host pool.')
 param SessionHostResourceGroupName string = ''
 
+@description('Required: No | Minimum numeric suffix for session hosts managed by this function. Session hosts with suffixes below this value are not counted toward the target count. | Default: 1025')
+@minValue(0)
+param ManagedSessionHostMinSuffix int = 1025
+
 param TimeStamp string = utcNow() // Used for unique deployment names. Do Not supply a value for this parameter.
 
 /////////////////
@@ -414,6 +418,10 @@ var varReplacementPlanSettings = [
   {
     name: '_SessionHostResourceGroupName'
     value: SessionHostResourceGroupName
+  }
+  {
+    name: '_ManagedSessionHostMinSuffix'
+    value: ManagedSessionHostMinSuffix
   }
 ]
 

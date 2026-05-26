@@ -4,8 +4,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.29.47.4906",
-      "templateHash": "16749693425937561368"
+      "version": "0.41.2.15936",
+      "templateHash": "15733337509483603632"
     }
   },
   "parameters": {
@@ -31,25 +31,18 @@
         "description": "Required: Yes | Name of the Log Analytics Workspace used by the Function App Insights."
       }
     },
-    "UseStandardTemplate": {
-      "type": "bool",
-      "defaultValue": true
-    },
     "SessionHostsRegion": {
-      "type": "string",
-      "defaultValue": ""
+      "type": "string"
     },
     "AvailabilityZones": {
       "type": "array",
       "defaultValue": []
     },
     "SessionHostSize": {
-      "type": "string",
-      "defaultValue": ""
+      "type": "string"
     },
     "AcceleratedNetworking": {
-      "type": "bool",
-      "defaultValue": false
+      "type": "bool"
     },
     "SessionHostDiskType": {
       "type": "string",
@@ -60,23 +53,8 @@
         "Premium_LRS"
       ]
     },
-    "DiskSizeGB": {
-      "type": "int",
-      "defaultValue": 128,
-      "metadata": {
-        "description": "OS disk size in GB"
-      }
-    },
-    "DnsServers": {
-      "type": "array",
-      "defaultValue": [],
-      "metadata": {
-        "description": "List of DNS server IP addresses to set on the NIC"
-      }
-    },
     "MarketPlaceOrCustomImage": {
       "type": "string",
-      "defaultValue": "Marketplace",
       "allowedValues": [
         "Marketplace",
         "Gallery"
@@ -124,12 +102,10 @@
       "defaultValue": true
     },
     "SubnetId": {
-      "type": "string",
-      "defaultValue": ""
+      "type": "string"
     },
     "IdentityServiceProvider": {
       "type": "string",
-      "defaultValue": "EntraID",
       "allowedValues": [
         "EntraID",
         "ActiveDirectory",
@@ -157,23 +133,7 @@
       "defaultValue": ""
     },
     "LocalAdminUsername": {
-      "type": "string",
-      "defaultValue": ""
-    },
-    "CustomTemplateSpecResourceId": {
-      "type": "string",
-      "defaultValue": ""
-    },
-    "VMNamesTemplateParameterName": {
-      "type": "string",
-      "defaultValue": "VMNames",
-      "metadata": {
-        "description": "Required: No | The name of the parameter in the template that specifies the VM Names array."
-      }
-    },
-    "CustomTemplateSpecParameters": {
-      "type": "object",
-      "defaultValue": {}
+      "type": "string"
     },
     "HostPoolResourceGroupName": {
       "type": "string",
@@ -305,13 +265,6 @@
         "description": "Required: No | Number of digits to use for the instance number of the session hosts (eg. AVDVM-01). | Default: 2"
       }
     },
-    "ManagedSessionHostMinSuffix": {
-      "type": "int",
-      "defaultValue": 1025,
-      "metadata": {
-        "description": "Required: No | Minimum numeric suffix for managed session hosts. Hosts below this suffix are ignored when calculating how many new hosts to deploy. | Default: 1025"
-      }
-    },
     "ReplaceSessionHostOnNewImageVersion": {
       "type": "bool",
       "defaultValue": true,
@@ -326,6 +279,13 @@
         "description": "Required: No | Delay in days before replacing session hosts when a new image version is detected. | Default: 0 (no delay)."
       }
     },
+    "VMNamesTemplateParameterName": {
+      "type": "string",
+      "defaultValue": "VMNames",
+      "metadata": {
+        "description": "Required: No | The name of the parameter in the template that specifies the VM Names array."
+      }
+    },
     "SessionHostResourceGroupName": {
       "type": "string",
       "defaultValue": "",
@@ -333,11 +293,12 @@
         "description": "Required: No | Leave this empty to deploy to same resource group as the host pool."
       }
     },
-    "FunctionAppUrl": {
-      "type": "string",
-      "defaultValue": "[if(and(contains(deployment().properties, 'templateLink'), not(empty(deployment().properties.templateLink.uri))), uri(replace(split(deployment().properties.templateLink.uri, '?')[0], 'DeployAVDSessionHostReplacer.json', ''), '../../FunctionApp/FunctionApp.zip'), 'https://raw.githubusercontent.com/stefze/AVDSessionHostReplacer/main/deploy/zip/FunctionApp.zip')]",
+    "ManagedSessionHostMinSuffix": {
+      "type": "int",
+      "defaultValue": 1025,
+      "minValue": 0,
       "metadata": {
-        "description": "Required: No | URL of the FunctionApp.zip package. By default, this is derived from the current template URL so it follows the deployed repo branch automatically."
+        "description": "Required: No | Minimum numeric suffix for session hosts managed by this function. Session hosts with suffixes below this value are not counted toward the target count. | Default: 1025"
       }
     },
     "TimeStamp": {
@@ -426,18 +387,16 @@
       "AzureUSGovernment",
       "AzureChinaCloud"
     ],
-    "splitParts": "[split(parameters('HostPoolResourceGroupName'), '-')]",
-    "rgpattern": "[concat('-',variables('splitParts')[2], '-', variables('splitParts')[3], '-', variables('splitParts')[4], '-', variables('splitParts')[5])]",
-    "rgpattern2": "[concat(variables('splitParts')[2],variables('splitParts')[3],variables('splitParts')[4],variables('splitParts')[5])]",
     "varGraphEnvironmentNames": "[if(parameters('UseGovDodGraph'), createArray('Global', 'USGovDod', 'China'), createArray('Global', 'USGov', 'China'))]",
     "varGraphEnvironmentName": "[variables('varGraphEnvironmentNames')[indexOf(variables('varAzureEnvironments'), environment().name)]]",
-    "varFunctionAppName": "[concat('AVDReplacer', variables('rgpattern'))]",
+    "varUniqueString": "[uniqueString(resourceGroup().id, parameters('HostPoolName'))]",
+    "varFunctionAppName": "[format('AVDSessionHostReplacer-{0}', uniqueString(resourceGroup().id, parameters('HostPoolName')))]",
     "varFunctionAppIdentity": "[if(parameters('UseUserAssignedManagedIdentity'), createObject('type', 'UserAssigned', 'userAssignedIdentities', createObject(format('{0}', parameters('UserAssignedManagedIdentityResourceId')), createObject())), createObject('type', 'SystemAssigned'))]"
   },
   "resources": [
     {
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2022-09-01",
+      "apiVersion": "2025-04-01",
       "name": "deployFunctionApp",
       "properties": {
         "expressionEvaluationOptions": {
@@ -450,9 +409,6 @@
           },
           "FunctionAppName": {
             "value": "[variables('varFunctionAppName')]"
-          },
-          "FunctionAppUrl": {
-            "value": "[parameters('FunctionAppUrl')]"
           },
           "EnableMonitoring": {
             "value": "[parameters('EnableMonitoring')]"
@@ -491,11 +447,11 @@
               },
               {
                 "name": "_SessionHostTemplate",
-                "value": "[reference(resourceId('Microsoft.Resources/deployments', 'deployStandardSessionHostTemplate'), '2022-09-01').outputs.TemplateSpecResourceId.value]"
+                "value": "[reference(resourceId('Microsoft.Resources/deployments', 'deployStandardSessionHostTemplate'), '2025-04-01').outputs.TemplateSpecResourceId.value]"
               },
               {
                 "name": "_SessionHostParameters",
-                "value": "[string(createObject('Location', parameters('SessionHostsRegion'), 'AvailabilityZones', parameters('AvailabilityZones'), 'VMSize', parameters('SessionHostSize'), 'AcceleratedNetworking', parameters('AcceleratedNetworking'), 'DiskType', parameters('SessionHostDiskType'), 'DiskSizeGB', parameters('DiskSizeGB'), 'DnsServers', parameters('DnsServers'), 'ImageReference', variables('varImageReference'), 'SecurityProfile', variables('varSecurityProfile'), 'SubnetId', parameters('SubnetId'), 'DomainJoinObject', variables('varDomainJoinObject'), 'DomainJoinPassword', if(equals(parameters('IdentityServiceProvider'), 'EntraID'), null(), createObject('reference', createObject('keyVault', createObject('id', reference(resourceId('Microsoft.Resources/deployments', 'deployKeyVault'), '2022-09-01').outputs.keyVaultId.value), 'secretName', 'DomainJoinPassword'))), 'AdminUsername', parameters('LocalAdminUsername'), 'VMNamePrefixLength', add(length(parameters('SessionHostNamePrefix')), length(parameters('SessionHostNameSeparator'))), 'tags', createObject()))]"
+                "value": "[string(createObject('Location', parameters('SessionHostsRegion'), 'AvailabilityZones', parameters('AvailabilityZones'), 'VMSize', parameters('SessionHostSize'), 'AcceleratedNetworking', parameters('AcceleratedNetworking'), 'DiskType', parameters('SessionHostDiskType'), 'ImageReference', variables('varImageReference'), 'SecurityProfile', variables('varSecurityProfile'), 'SubnetId', parameters('SubnetId'), 'DomainJoinObject', variables('varDomainJoinObject'), 'DomainJoinPassword', if(equals(parameters('IdentityServiceProvider'), 'EntraID'), null(), createObject('reference', createObject('keyVault', createObject('id', reference(resourceId('Microsoft.Resources/deployments', 'deployKeyVault'), '2025-04-01').outputs.keyVaultId.value), 'secretName', 'DomainJoinPassword'))), 'AdminUsername', parameters('LocalAdminUsername'), 'tags', createObject()))]"
               },
               {
                 "name": "_SubscriptionId",
@@ -511,11 +467,11 @@
               },
               {
                 "name": "_ClientId",
-                "value": "[if(parameters('UseUserAssignedManagedIdentity'), reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', split(parameters('UserAssignedManagedIdentityResourceId'), '/')[2], split(parameters('UserAssignedManagedIdentityResourceId'), '/')[4]), 'Microsoft.ManagedIdentity/userAssignedIdentities', split(parameters('UserAssignedManagedIdentityResourceId'), '/')[8]), '2023-01-31').clientId, '')]"
+                "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', split(parameters('UserAssignedManagedIdentityResourceId'), '/')[2], split(parameters('UserAssignedManagedIdentityResourceId'), '/')[4]), 'Microsoft.ManagedIdentity/userAssignedIdentities', split(parameters('UserAssignedManagedIdentityResourceId'), '/')[8]), '2023-01-31').clientId]"
               },
               {
                 "name": "_TenantId",
-                "value": "[if(parameters('UseUserAssignedManagedIdentity'), reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', split(parameters('UserAssignedManagedIdentityResourceId'), '/')[2], split(parameters('UserAssignedManagedIdentityResourceId'), '/')[4]), 'Microsoft.ManagedIdentity/userAssignedIdentities', split(parameters('UserAssignedManagedIdentityResourceId'), '/')[8]), '2023-01-31').tenantId, '')]"
+                "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', split(parameters('UserAssignedManagedIdentityResourceId'), '/')[2], split(parameters('UserAssignedManagedIdentityResourceId'), '/')[4]), 'Microsoft.ManagedIdentity/userAssignedIdentities', split(parameters('UserAssignedManagedIdentityResourceId'), '/')[8]), '2023-01-31').tenantId]"
               },
               {
                 "name": "_GraphEnvironmentName",
@@ -566,10 +522,6 @@
                 "value": "[parameters('SessionHostInstanceNumberPadding')]"
               },
               {
-                "name": "_ManagedSessionHostMinSuffix",
-                "value": "[parameters('ManagedSessionHostMinSuffix')]"
-              },
-              {
                 "name": "_ReplaceSessionHostOnNewImageVersion",
                 "value": "[parameters('ReplaceSessionHostOnNewImageVersion')]"
               },
@@ -584,6 +536,10 @@
               {
                 "name": "_SessionHostResourceGroupName",
                 "value": "[parameters('SessionHostResourceGroupName')]"
+              },
+              {
+                "name": "_ManagedSessionHostMinSuffix",
+                "value": "[parameters('ManagedSessionHostMinSuffix')]"
               }
             ]
           },
@@ -597,8 +553,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.29.47.4906",
-              "templateHash": "3734734378229800954"
+              "version": "0.41.2.15936",
+              "templateHash": "13564903532876487831"
             }
           },
           "parameters": {
@@ -630,9 +586,9 @@
                 "description": "Required: Yes | Name of the Function App."
               }
             },
-            "FunctionAppUrl": {
+            "FunctionAppZipUrl": {
               "type": "string",
-              "defaultValue": "https://raw.githubusercontent.com/stefze/AVDSessionHostReplacer/main/deploy/zip/FunctionApp.zip",
+              "defaultValue": "https://github.com/Azure/AVDSessionHostReplacer/releases/download/v0.3.0/FunctionApp.zip",
               "metadata": {
                 "description": "Required: No | URL of the FunctionApp.zip file. This is the zip file containing the Function App code. | Default: The latest release of the Function App code."
               }
@@ -665,22 +621,17 @@
             }
           },
           "variables": {
-            "rgname": "[toLower(resourceGroup().name)]",
-            "splitParts": "[split(variables('rgname'), '-')]",
-            "rgpattern2": "[concat(variables('splitParts')[2],variables('splitParts')[3],variables('splitParts')[4],variables('splitParts')[5])]",
-            "varStorageAccountName": "[concat('st', variables('rgpattern2'))]",
-            "varLogAnalyticsWorkspaceName": "[concat('law-', parameters('FunctionAppName'))]",
-            "varAppServicePlanName": "[concat('Asp-', parameters('FunctionAppName'))]",
-            "varGraphEnvironmentName": "your_value_here"
+            "varStorageAccountName": "[format('stavdrpfunc{0}', uniqueString(parameters('FunctionAppName')))]",
+            "varLogAnalyticsWorkspaceName": "[format('{0}-law', parameters('FunctionAppName'))]",
+            "varAppServicePlanName": "[format('{0}-asp', parameters('FunctionAppName'))]"
           },
           "resources": [
             {
               "type": "Microsoft.Web/sites/extensions",
               "apiVersion": "2023-01-01",
-              "name": "[format('{0}/{1}', parameters('FunctionAppName'), 'onedeploy')]",
+              "name": "[format('{0}/{1}', parameters('FunctionAppName'), 'MSDeploy')]",
               "properties": {
-                "packageUri": "[parameters('FunctionAppUrl')]",
-                "type": "zip"
+                "packageUri": "[parameters('FunctionAppZipUrl')]"
               },
               "dependsOn": [
                 "[resourceId('Microsoft.Web/sites', parameters('FunctionAppName'))]"
@@ -751,7 +702,7 @@
                   "use32BitWorkerProcess": false,
                   "powerShellVersion": "7.4",
                   "netFrameworkVersion": "v6.0",
-                  "appSettings": "[union(createArray(createObject('name', 'FUNCTIONS_EXTENSION_VERSION', 'value', '~4'), createObject('name', 'FUNCTIONS_WORKER_RUNTIME', 'value', 'powershell'), createObject('name', 'AzureWebJobs.timerTrigger1.Disabled', 'value', '1'), createObject('name', 'AzureWebJobsStorage', 'value', format('DefaultEndpointsProtocol=https;AccountName={0};EndpointSuffix={1};AccountKey={2}', variables('varStorageAccountName'), environment().suffixes.storage, listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('varStorageAccountName')), '2022-05-01').keys[0].value)), createObject('name', 'WEBSITE_CONTENTAZUREFILECONNECTIONSTRING', 'value', format('DefaultEndpointsProtocol=https;AccountName={0};EndpointSuffix={1};AccountKey={2}', variables('varStorageAccountName'), environment().suffixes.storage, listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('varStorageAccountName')), '2022-05-01').keys[0].value)), createObject('name', 'APPINSIGHTS_INSTRUMENTATIONKEY', 'value', reference(resourceId('Microsoft.Insights/components', variables('varAppServicePlanName')), '2020-02-02').InstrumentationKey), createObject('name', 'WEBSITE_CONTENTSHARE', 'value', toLower(parameters('FunctionAppName')))), if(parameters('EnableMonitoring'), createArray(createObject('name', 'APPINSIGHTS_INSTRUMENTATIONKEY', 'value', reference(resourceId('Microsoft.Insights/components', variables('varAppServicePlanName')), '2020-02-02').InstrumentationKey)), createArray()), parameters('ReplacementPlanSettings'))]",
+                  "appSettings": "[union(createArray(createObject('name', 'FUNCTIONS_EXTENSION_VERSION', 'value', '~4'), createObject('name', 'FUNCTIONS_WORKER_RUNTIME', 'value', 'powershell'), createObject('name', 'AzureWebJobsStorage', 'value', format('DefaultEndpointsProtocol=https;AccountName={0};EndpointSuffix={1};AccountKey={2}', variables('varStorageAccountName'), environment().suffixes.storage, listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('varStorageAccountName')), '2022-05-01').keys[0].value)), createObject('name', 'WEBSITE_CONTENTAZUREFILECONNECTIONSTRING', 'value', format('DefaultEndpointsProtocol=https;AccountName={0};EndpointSuffix={1};AccountKey={2}', variables('varStorageAccountName'), environment().suffixes.storage, listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('varStorageAccountName')), '2022-05-01').keys[0].value)), createObject('name', 'APPINSIGHTS_INSTRUMENTATIONKEY', 'value', reference(resourceId('Microsoft.Insights/components', variables('varAppServicePlanName')), '2020-02-02').InstrumentationKey), createObject('name', 'WEBSITE_CONTENTSHARE', 'value', toLower(parameters('FunctionAppName')))), if(parameters('EnableMonitoring'), createArray(createObject('name', 'APPINSIGHTS_INSTRUMENTATIONKEY', 'value', reference(resourceId('Microsoft.Insights/components', variables('varAppServicePlanName')), '2020-02-02').InstrumentationKey)), createArray()), parameters('ReplacementPlanSettings'))]",
                   "ftpsState": "Disabled",
                   "cors": {
                     "allowedOrigins": [
@@ -783,7 +734,7 @@
     {
       "condition": "[not(equals(parameters('IdentityServiceProvider'), 'EntraID'))]",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2022-09-01",
+      "apiVersion": "2025-04-01",
       "name": "deployKeyVault",
       "properties": {
         "expressionEvaluationOptions": {
@@ -795,7 +746,7 @@
             "value": "[parameters('Location')]"
           },
           "KeyVaultName": {
-            "value": "[concat('kvSHR', variables('rgpattern2'))]"
+            "value": "[format('kv-AVDSHR-{0}', variables('varUniqueString'))]"
           },
           "DomainJoinPassword": {
             "value": "[parameters('ADJoinUserPassword')]"
@@ -807,8 +758,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.29.47.4906",
-              "templateHash": "17584014780822218958"
+              "version": "0.41.2.15936",
+              "templateHash": "4306920110077115072"
             }
           },
           "parameters": {
@@ -862,7 +813,7 @@
     },
     {
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2022-09-01",
+      "apiVersion": "2025-04-01",
       "name": "deployStandardSessionHostTemplate",
       "properties": {
         "expressionEvaluationOptions": {
@@ -883,8 +834,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.29.47.4906",
-              "templateHash": "10208603161915711494"
+              "version": "0.41.2.15936",
+              "templateHash": "11316353745354698583"
             }
           },
           "parameters": {
@@ -903,7 +854,7 @@
               "metadata": {
                 "_generator": {
                   "name": "bicep",
-                  "version": "0.33.4.45862",
+                  "version": "0.32.4.45862",
                   "templateHash": "13792602582245425536"
                 }
               },
@@ -946,7 +897,6 @@
                 },
                 "DnsServers": {
                   "type": "array",
-                  "defaultValue": [],
                   "metadata": {
                     "description": "List of DNS server IP addresses to set on the NIC"
                   }
@@ -1384,7 +1334,7 @@
     {
       "condition": "[not(parameters('UseUserAssignedManagedIdentity'))]",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2022-09-01",
+      "apiVersion": "2025-04-01",
       "name": "[format('RBAC-vdiVMContributor-{0}', parameters('TimeStamp'))]",
       "subscriptionId": "[subscription().subscriptionId]",
       "location": "[resourceGroup().location]",
@@ -1395,7 +1345,7 @@
         "mode": "Incremental",
         "parameters": {
           "PrinicpalId": {
-            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'deployFunctionApp'), '2022-09-01').outputs.functionAppPrincipalId.value]"
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'deployFunctionApp'), '2025-04-01').outputs.functionAppPrincipalId.value]"
           },
           "RoleDefinitionId": {
             "value": "a959dbd1-f747-45e3-8ba6-dd80f235f97c"
@@ -1410,8 +1360,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.29.47.4906",
-              "templateHash": "852792330190262115"
+              "version": "0.41.2.15936",
+              "templateHash": "18435544943446317056"
             }
           },
           "parameters": {
@@ -1445,7 +1395,7 @@
     {
       "condition": "[not(parameters('UseUserAssignedManagedIdentity'))]",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2022-09-01",
+      "apiVersion": "2025-04-01",
       "name": "[format('RBAC-TemplateSpecReader-{0}', parameters('TimeStamp'))]",
       "subscriptionId": "[subscription().subscriptionId]",
       "location": "[resourceGroup().location]",
@@ -1456,13 +1406,13 @@
         "mode": "Incremental",
         "parameters": {
           "PrinicpalId": {
-            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'deployFunctionApp'), '2022-09-01').outputs.functionAppPrincipalId.value]"
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'deployFunctionApp'), '2025-04-01').outputs.functionAppPrincipalId.value]"
           },
           "RoleDefinitionId": {
             "value": "392ae280-861d-42bd-9ea5-08ee6d83b80e"
           },
           "Scope": {
-            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'deployStandardSessionHostTemplate'), '2022-09-01').outputs.TemplateSpecResourceId.value]"
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'deployStandardSessionHostTemplate'), '2025-04-01').outputs.TemplateSpecResourceId.value]"
           }
         },
         "template": {
@@ -1471,8 +1421,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.29.47.4906",
-              "templateHash": "852792330190262115"
+              "version": "0.41.2.15936",
+              "templateHash": "18435544943446317056"
             }
           },
           "parameters": {
