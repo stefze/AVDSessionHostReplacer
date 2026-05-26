@@ -524,25 +524,15 @@
             "label": "DNS settings",
             "elements": [
               {
-                "name": "DnsServer1",
+                "name": "DnsServer",
                 "type": "Microsoft.Common.TextBox",
-                "label": "Primary DNS (IPv4)",
+                "label": "DNS Server (IPv4)",
                 "placeholder": "e.g., 10.0.0.4",
+                "toolTip": "Specify a custom DNS server for the session hosts. Leave empty to use Azure-provided DNS.",
                 "constraints": {
-                  "required": true,
-                  "regex": "^((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)\\.){3}(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)$",
-                  "validationMessage": "Enter a valid IPv4 address (0-255 in each octet)."
-                }
-              },
-              {
-                "name": "DnsServer2",
-                "type": "Microsoft.Common.TextBox",
-                "label": "Secondary DNS (IPv4)",
-                "placeholder": "e.g., 10.0.0.5",
-                "constraints": {
-                  "required": true,
-                  "regex": "^((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)\\.){3}(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)$",
-                  "validationMessage": "Enter a valid IPv4 address (0-255 in each octet)."
+                  "required": false,
+                  "regex": "^$|^((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)\\.){3}(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)$",
+                  "validationMessage": "Enter a valid IPv4 address (0-255 in each octet) or leave empty."
                 }
               }
             ]
@@ -863,7 +853,7 @@
 				"ReplaceSessionHostOnNewImageVersionDelayDays": "[steps('optionalParametersStep')._ReplaceSessionHostOnNewImageVersionDelayDays]",
 				"VMNamesTemplateParameterName": "VMNames",
 				"SessionHostResourceGroupName": "[steps('optionalParametersStep')._SessionHostResourceGroupName]",
-				"DnsServers": "[createArray(steps('SessionHostsTemplate').DnsSettings.DnsServer1, steps('SessionHostsTemplate').DnsSettings.DnsServer2)]"
+				"DnsServers": "[if(empty(steps('SessionHostsTemplate').DnsSettings.DnsServer), createArray(), createArray(steps('SessionHostsTemplate').DnsSettings.DnsServer))]"
 			}
 		}
 	}
