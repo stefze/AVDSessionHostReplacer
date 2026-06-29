@@ -46,6 +46,7 @@
 		'Deploy-SHRSessionHost'
 		'Remove-SHRSessionHost'
 		'Set-SHRNewSessionHostDrainMode'
+		'Get-SHRDrainCandidate'
 		'Get-SHRLatestImageVersion'
 		'Get-SHRSessionHostParameters'
 	)
