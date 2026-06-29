@@ -110,6 +110,9 @@ param TagDeployTimestamp string = 'AutoReplaceDeployTimestamp'
 @description('Required: No | Tag name used to indicate drain timestamp of session host pending deletion. | Default: AutoReplacePendingDrainTimestamp.')
 param TagPendingDrainTimestamp string = 'AutoReplacePendingDrainTimestamp'
 
+@description('Required: No | Tag name used to mark a newly deployed session host that should be placed in drain mode once it registers with the host pool. | Default: AutoReplaceDeployInDrainMode.')
+param TagDeployInDrainMode string = 'AutoReplaceDeployInDrainMode'
+
 @description('Required: No | Tag name used to exclude session host from Scaling Plan activities. | Default: ScalingPlanExclusion')
 param TagScalingPlanExclusionTag string = 'ScalingPlanExclusion'
 
@@ -124,6 +127,9 @@ param FixSessionHostTags bool = true
 
 @description('Required: No | When enabled, the Session Host Replacer will automatically consider pre-existing VMs for replacement if they meet the criteria | Default: False.')
 param IncludePreExistingSessionHosts bool = false
+
+@description('Required: No | When enabled, newly deployed session hosts are placed in drain mode (AllowNewSession = false) after they register with the host pool. Administrators must manually allow new sessions when the host is ready. | Default: False.')
+param DeploySessionHostsInDrainMode bool = false
 
 @description('Required: No | Prefix used for the deployment name of the session hosts. | Default: AVDSessionHostReplacer')
 param SHRDeploymentPrefix string = 'AVDSessionHostReplacer'
@@ -376,6 +382,10 @@ var varReplacementPlanSettings = [
     value: TagPendingDrainTimestamp
   }
   {
+    name: '_Tag_DeployInDrainMode'
+    value: TagDeployInDrainMode
+  }
+  {
     name: '_Tag_ScalingPlanExclusionTag'
     value: TagScalingPlanExclusionTag
   }
@@ -394,6 +404,10 @@ var varReplacementPlanSettings = [
   {
     name: '_IncludePreExistingSessionHosts'
     value: IncludePreExistingSessionHosts
+  }
+  {
+    name: '_DeploySessionHostsInDrainMode'
+    value: DeploySessionHostsInDrainMode
   }
   {
     name: '_SHRDeploymentPrefix'

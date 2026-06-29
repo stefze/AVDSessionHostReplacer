@@ -684,6 +684,16 @@
 							}
 						},
 						{
+							"name": "_Tag_DeployInDrainMode",
+							"type": "Microsoft.Common.TextBox",
+							"label": "Deploy In Drain Mode Tag Name",
+							"toolTip": "The name of the tag used to mark a newly deployed session host that should be placed in drain mode once it registers with the host pool.",
+							"defaultValue": "AutoReplaceDeployInDrainMode",
+							"constraints": {
+								"required": false
+							}
+						},
+						{
 							"name": "_Tag_ScalingPlanExclusionTag",
 							"type": "Microsoft.Common.TextBox",
 							"label": "Scaling Plan Exclusion Tag Name",
@@ -730,6 +740,16 @@
 							"label": "Deployment Prefix",
 							"toolTip": "The prefix of the deployment created in the session hosts resource group when replacement VMs are deploying. This is used to track running and failed deployments.",
 							"defaultValue": "AVDSessionHostReplacer",
+							"constraints": {
+								"required": false
+							}
+						},
+						{
+							"name": "_DeploySessionHostsInDrainMode",
+							"type": "Microsoft.Common.CheckBox",
+							"label": "Deploy Session Hosts In Drain Mode",
+							"toolTip": "If enabled, newly deployed session hosts are placed in drain mode (new sessions disallowed) after they register with the host pool. An administrator must manually allow new sessions when the host is ready.",
+							"defaultValue": false,
 							"constraints": {
 								"required": false
 							}
@@ -841,11 +861,13 @@
 				"TagIncludeInAutomation": "[steps('optionalParametersStep')._Tag_IncludeInAutomation]",
 				"TagDeployTimestamp": "[steps('optionalParametersStep')._Tag_DeployTimestamp]",
 				"TagPendingDrainTimestamp": "[steps('optionalParametersStep')._Tag_PendingDrainTimestamp]",
+				"TagDeployInDrainMode": "[steps('optionalParametersStep')._Tag_DeployInDrainMode]",
 				"TagScalingPlanExclusionTag": "[steps('optionalParametersStep')._Tag_ScalingPlanExclusionTag]",
 				"TargetVMAgeDays": "[steps('optionalParametersStep')._TargetVMAgeDays]",
 				"DrainGracePeriodHours": "[steps('optionalParametersStep')._DrainGracePeriodHours]",
 				"FixSessionHostTags": "[steps('optionalParametersStep')._FixSessionHostTags]",
 				"IncludePreExistingSessionHosts": "[steps('basics').HostPoolSettingsSection.IncludePreExistingSessionHosts]",
+				"DeploySessionHostsInDrainMode": "[steps('optionalParametersStep')._DeploySessionHostsInDrainMode]",
 				"DeploymentPrefix": "[steps('optionalParametersStep')._SHRDeploymentPrefix]",
 				"SessionHostInstanceNumberPadding": "[steps('optionalParametersStep')._SessionHostInstanceNumberPadding]",
 				"SessionHostNameSeparator": "[if(steps('optionalParametersStep')._SessionHostNameSeparator,'-','')]",

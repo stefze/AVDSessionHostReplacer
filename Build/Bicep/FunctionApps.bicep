@@ -51,6 +51,12 @@ param TagDeployTimestamp string = 'AutoReplaceDeployTimestamp'
 @description('Required: No | Tag name used to indicate drain timestamp of session host pending deletion. | Default: AutoReplacePendingDrainTimestamp.')
 param TagPendingDrainTimestamp string = 'AutoReplacePendingDrainTimestamp'
 
+@description('Required: No | Tag name used to mark a newly deployed session host that should be placed in drain mode once it registers with the host pool. | Default: AutoReplaceDeployInDrainMode.')
+param TagDeployInDrainMode string = 'AutoReplaceDeployInDrainMode'
+
+@description('Required: No | When enabled, newly deployed session hosts are placed in drain mode (AllowNewSession = false) after they register with the host pool. Administrators must manually allow new sessions when the host is ready. | Default: False.')
+param DeploySessionHostsInDrainMode bool = false
+
 @description('Required: No | Tag name used to exclude session host from Scaling Plan activities. | Default: ScalingPlanExclusion')
 param TagScalingPlanExclusionTag string = 'ScalingPlanExclusion'
 
@@ -200,6 +206,10 @@ var varFunctionAppSettings = [
     value: TagPendingDrainTimestamp
   }
   {
+    name: '_Tag_DeployInDrainMode'
+    value: TagDeployInDrainMode
+  }
+  {
     name: '_Tag_ScalingPlanExclusionTag'
     value: TagScalingPlanExclusionTag
   }
@@ -210,6 +220,10 @@ var varFunctionAppSettings = [
   {
     name: '_DrainGracePeriodHours'
     value: DrainGracePeriodHours
+  }
+  {
+    name: '_DeploySessionHostsInDrainMode'
+    value: DeploySessionHostsInDrainMode
   }
   {
     name: '_StorageAccountName'

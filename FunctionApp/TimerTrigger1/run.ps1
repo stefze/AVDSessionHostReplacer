@@ -27,6 +27,12 @@ Write-PSFMessage -Level Host -Message "Found {0} session hosts" -StringValues $s
 $sessionHostsFiltered = $sessionHosts | Where-Object { $_.IncludeInAutomation }
 Write-PSFMessage -Level Host -Message "Filtered to {0} session hosts enabled for automatic replacement: {1}" -StringValues $sessionHostsFiltered.Count, ($sessionHostsFiltered.VMName -join ',')
 
+# Place newly deployed session hosts into drain mode if the feature is enabled.
+if (Get-FunctionConfig _DeploySessionHostsInDrainMode) {
+    Write-PSFMessage -Level Host -Message "DeploySessionHostsInDrainMode is enabled. Checking for newly deployed session hosts to place in drain mode."
+    Set-SHRNewSessionHostDrainMode -SessionHosts $sessionHosts -ResourceGroupName $hostPoolResourceGroupName
+}
+
 # Get running deployments, if any
 $runningDeployments = Get-SHRRunningDeployment -ResourceGroupName $sessionHostResourceGroupName
 Write-PSFMessage -Level Host -Message "Found {0} running deployments" -StringValues $runningDeployments.Count

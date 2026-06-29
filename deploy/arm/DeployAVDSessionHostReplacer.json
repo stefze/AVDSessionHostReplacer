@@ -4,8 +4,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.41.2.15936",
-      "templateHash": "15733337509483603632"
+      "version": "0.44.1.10279",
+      "templateHash": "4789291089625217172"
     }
   },
   "parameters": {
@@ -216,6 +216,13 @@
         "description": "Required: No | Tag name used to indicate drain timestamp of session host pending deletion. | Default: AutoReplacePendingDrainTimestamp."
       }
     },
+    "TagDeployInDrainMode": {
+      "type": "string",
+      "defaultValue": "AutoReplaceDeployInDrainMode",
+      "metadata": {
+        "description": "Required: No | Tag name used to mark a newly deployed session host that should be placed in drain mode once it registers with the host pool. | Default: AutoReplaceDeployInDrainMode."
+      }
+    },
     "TagScalingPlanExclusionTag": {
       "type": "string",
       "defaultValue": "ScalingPlanExclusion",
@@ -249,6 +256,13 @@
       "defaultValue": false,
       "metadata": {
         "description": "Required: No | When enabled, the Session Host Replacer will automatically consider pre-existing VMs for replacement if they meet the criteria | Default: False."
+      }
+    },
+    "DeploySessionHostsInDrainMode": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Required: No | When enabled, newly deployed session hosts are placed in drain mode (AllowNewSession = false) after they register with the host pool. Administrators must manually allow new sessions when the host is ready. | Default: False."
       }
     },
     "SHRDeploymentPrefix": {
@@ -494,6 +508,10 @@
                 "value": "[parameters('TagPendingDrainTimestamp')]"
               },
               {
+                "name": "_Tag_DeployInDrainMode",
+                "value": "[parameters('TagDeployInDrainMode')]"
+              },
+              {
                 "name": "_Tag_ScalingPlanExclusionTag",
                 "value": "[parameters('TagScalingPlanExclusionTag')]"
               },
@@ -512,6 +530,10 @@
               {
                 "name": "_IncludePreExistingSessionHosts",
                 "value": "[parameters('IncludePreExistingSessionHosts')]"
+              },
+              {
+                "name": "_DeploySessionHostsInDrainMode",
+                "value": "[parameters('DeploySessionHostsInDrainMode')]"
               },
               {
                 "name": "_SHRDeploymentPrefix",
@@ -553,8 +575,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.41.2.15936",
-              "templateHash": "13564903532876487831"
+              "version": "0.44.1.10279",
+              "templateHash": "6442969198724480960"
             }
           },
           "parameters": {
@@ -758,8 +780,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.41.2.15936",
-              "templateHash": "4306920110077115072"
+              "version": "0.44.1.10279",
+              "templateHash": "3115060339602144712"
             }
           },
           "parameters": {
@@ -834,8 +856,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.41.2.15936",
-              "templateHash": "11316353745354698583"
+              "version": "0.44.1.10279",
+              "templateHash": "4258184463662260284"
             }
           },
           "parameters": {
@@ -1360,8 +1382,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.41.2.15936",
-              "templateHash": "18435544943446317056"
+              "version": "0.44.1.10279",
+              "templateHash": "16308754494685857287"
             }
           },
           "parameters": {
@@ -1421,8 +1443,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.41.2.15936",
-              "templateHash": "18435544943446317056"
+              "version": "0.44.1.10279",
+              "templateHash": "16308754494685857287"
             }
           },
           "parameters": {

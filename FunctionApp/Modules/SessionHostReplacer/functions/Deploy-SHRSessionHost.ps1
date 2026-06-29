@@ -44,6 +44,12 @@ function Deploy-SHRSessionHost {
         [string] $TagDeployTimestamp = (Get-FunctionConfig _Tag_DeployTimestamp),
 
         [Parameter()]
+        [bool] $DeploySessionHostsInDrainMode = (Get-FunctionConfig _DeploySessionHostsInDrainMode),
+
+        [Parameter()]
+        [string] $TagDeployInDrainMode = (Get-FunctionConfig _Tag_DeployInDrainMode),
+
+        [Parameter()]
         [hashtable] $SessionHostParameters = (Get-FunctionConfig _SessionHostParameters | ConvertTo-CaseInsensitiveHashtable), #TODO: Port this into AzureFunctionConfiguration module and make it ciHashtable type.
 
         [Parameter()]
@@ -72,6 +78,11 @@ function Deploy-SHRSessionHost {
     $sessionHostParameters['HostPoolToken']                 = $hostPoolToken.Token
     $sessionHostParameters['Tags'][$TagIncludeInAutomation] = $true
     $sessionHostParameters['Tags'][$TagDeployTimestamp]     = (Get-Date -AsUTC -Format 'o')
+
+    if ($DeploySessionHostsInDrainMode) {
+        Write-PSFMessage -Level Host -Message 'DeploySessionHostsInDrainMode is enabled. Tagging new session host(s) with {0} so they are placed in drain mode after registration.' -StringValues $TagDeployInDrainMode
+        $sessionHostParameters['Tags'][$TagDeployInDrainMode] = $true
+    }
 
     $deploymentTimestamp = Get-Date -AsUTC -Format 'FileDateTime'
     $deploymentName = "{0}_{1}_Count_{2}_VMs" -f $DeploymentPrefix, $deploymentTimestamp, $sessionHostNames.count

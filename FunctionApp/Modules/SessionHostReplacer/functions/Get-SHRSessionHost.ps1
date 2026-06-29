@@ -25,6 +25,8 @@ function Get-SHRSessionHost {
         [Parameter()]
         [string] $TagPendingDrainTimeStamp = (Get-FunctionConfig _Tag_PendingDrainTimestamp),
         [Parameter()]
+        [string] $TagDeployInDrainMode = (Get-FunctionConfig _Tag_DeployInDrainMode),
+        [Parameter()]
         [switch] $FixSessionHostTags,
         [Parameter()]
         [bool] $IncludePreExistingSessionHosts = (Get-FunctionConfig _IncludePreExistingSessionHosts)
@@ -98,12 +100,24 @@ function Get-SHRSessionHost {
 
         #endregion: Tag PendingDrainTimeStamp
 
+        #region: Tag DeployInDrainMode
+        $vmDeployInDrainMode = $vmTags.Properties.TagsProperty[$TagDeployInDrainMode]
+        if ($vmDeployInDrainMode -eq "True") {
+            Write-PSFMessage -Level Host -Message 'VM has a tag {0} with value {1}' -StringValues $TagDeployInDrainMode, $vmDeployInDrainMode
+            $vmDeployInDrainMode = $true
+        }
+        else {
+            $vmDeployInDrainMode = $false
+        }
+        #endregion: Tag DeployInDrainMode
+
         $vmOutput = @{ # We are combining the VM details and SessionHost objects into a single PS Custom Object
             VMName                = $vm.Name
             FQDN                  = $item.Name -replace ".+\/(.+)", '$1'
             DeployTimestamp       = $vmDeployTimeStamp
             IncludeInAutomation   = $vmIncludeInAutomation
             PendingDrainTimeStamp = $vmPendingDrainTimeStamp
+            DeployInDrainMode     = $vmDeployInDrainMode
             ImageVersion          = $vm.StorageProfile.ImageReference.ExactVersion
         }
         $item.PSObject.Properties.ForEach{ $vmOutput[$_.Name] = $_.Value }

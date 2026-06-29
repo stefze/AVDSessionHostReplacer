@@ -45,6 +45,7 @@
 		'Get-SHRHostPoolDecision'
 		'Deploy-SHRSessionHost'
 		'Remove-SHRSessionHost'
+		'Set-SHRNewSessionHostDrainMode'
 		'Get-SHRLatestImageVersion'
 		'Get-SHRSessionHostParameters'
 	)
