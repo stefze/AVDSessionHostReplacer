@@ -38,18 +38,45 @@ function Get-SHRSessionHost {
     $sessionHosts = Get-AzWvdSessionHost -ResourceGroupName $ResourceGroupName -HostPoolName $HostPoolName -ErrorAction Stop | Select-Object Name, ResourceId, Session, AllowNewSession, Status, AssignedUser
     Write-PSFMessage -Level Host -Message 'Found {0} session hosts' -StringValues $sessionHosts.Count
 
-    # For each session host, get the VM details
+    # Bulk fetch VM details (created time, image version and tags) for all session hosts in a single Azure Resource Graph
+    # query instead of one Get-AzVM + Get-AzTag call per host. This keeps enumeration fast for large host pools.
+    Write-PSFMessage -Level Host -Message 'Getting VM details for {0} session hosts using Azure Resource Graph' -StringValues $sessionHosts.Count
+    $vmQuery = @"
+Resources
+| where type =~ 'microsoft.compute/virtualmachines'
+| project id, name, timeCreated = properties.timeCreated, exactVersion = properties.storageProfile.imageReference.exactVersion, tags
+"@
+    $vmLookup = @{}
+    $skipToken = $null
+    do {
+        $graphParams = @{ Query = $vmQuery; First = 1000 }
+        if ($skipToken) { $graphParams['SkipToken'] = $skipToken }
+        $batch = Search-AzGraph @graphParams -ErrorAction Stop
+        foreach ($vm in $batch) {
+            $vmLookup[$vm.id.ToLower()] = $vm
+        }
+        $skipToken = $batch.SkipToken
+    } while ($skipToken)
+    Write-PSFMessage -Level Host -Message 'Retrieved {0} VM records from Azure Resource Graph' -StringValues $vmLookup.Count
+
+    # For each session host, combine the host pool details with the VM details
     $result = foreach ($item in $sessionHosts) {
-        Write-PSFMessage -Level Host -Message 'Getting VM details for {0}' -StringValues $item.Name
+        $vm = $vmLookup[$item.ResourceId.ToLower()]
+        if (-not $vm) {
+            Write-PSFMessage -Level Warning -Message 'Could not find VM details for session host {0}. Skipping.' -StringValues $item.Name
+            continue
+        }
+        $vmTimeCreated = [DateTime]$vm.timeCreated
+        Write-PSFMessage -Level Host -Message 'VM was created on {0}' -StringValues $vmTimeCreated
+        Write-PSFMessage -Level Host -Message 'VM exact version is {0}' -StringValues $vm.exactVersion
 
-        $vm = Get-AzVM -ResourceId $item.ResourceId | Select-Object Name, TimeCreated,StorageProfile
-        Write-PSFMessage -Level Host -Message 'VM was created on {0}' -StringValues $vm.TimeCreated
-        Write-PSFMessage -Level Host -Message 'VM exact version is {0}' -StringValues $vm.StorageProfile.ImageReference.ExactVersion
-
-        Write-PSFMessage -Level Host -Message 'Getting VM tags' -StringValues $item.Name
-        $vmTags = Get-AzTag -ResourceId $item.ResourceId
+        # Tags come back from Resource Graph as a dictionary; index directly by tag name.
+        $vmTagsProperty = @{}
+        if ($vm.tags) {
+            foreach ($tag in $vm.tags.PSObject.Properties) { $vmTagsProperty[$tag.Name] = $tag.Value }
+        }
         #region: Tag DeployTimestamp
-        $vmDeployTimeStamp = $vmTags.Properties.TagsProperty[$TagDeployTimestamp]
+        $vmDeployTimeStamp = $vmTagsProperty[$TagDeployTimestamp]
         try {
             $vmDeployTimeStamp = [DateTime]::Parse($vmDeployTimeStamp)
             Write-PSFMessage -Level Host -Message 'VM has a tag {0} with value {1}' -StringValues $TagDeployTimestamp, $vmDeployTimeStamp
@@ -58,15 +85,15 @@ function Get-SHRSessionHost {
             $value = if ($null -eq $vmDeployTimeStamp) { 'null' } else { $vmDeployTimeStamp }
             Write-PSFMessage -Level Host -Message 'VM tag {0} with value {1} is not a valid date' -StringValues $TagDeployTimestamp, $value
             if ($FixSessionHostTags) {
-                Write-PSFMessage -Level Host -Message 'Copying VM CreateTime to tag {0} with value {1}' -StringValues $TagDeployTimestamp, $vm.TimeCreated.ToString('o')
-                Update-AzTag -ResourceId $item.ResourceId -Tag @{ $TagDeployTimestamp = $vm.TimeCreated.ToString('o') } -Operation Merge
+                Write-PSFMessage -Level Host -Message 'Copying VM CreateTime to tag {0} with value {1}' -StringValues $TagDeployTimestamp, $vmTimeCreated.ToString('o')
+                Update-AzTag -ResourceId $item.ResourceId -Tag @{ $TagDeployTimestamp = $vmTimeCreated.ToString('o') } -Operation Merge
             }
-            $vmDeployTimeStamp = $vm.TimeCreated
+            $vmDeployTimeStamp = $vmTimeCreated
         }
         #endregion: Tag DeployTimestamp
 
         #region: Tag IncludeInAutomation
-        $vmIncludeInAutomation = $vmTags.Properties.TagsProperty[$TagIncludeInAutomation]
+        $vmIncludeInAutomation = $vmTagsProperty[$TagIncludeInAutomation]
         if ($vmIncludeInAutomation -eq "True") {
             Write-PSFMessage -Level Host -Message 'VM has a tag {0} with value {1}' -StringValues $TagIncludeInAutomation, $vmIncludeInAutomation
             $vmIncludeInAutomation = $true
@@ -88,7 +115,7 @@ function Get-SHRSessionHost {
         #endregion: Tag IncludeInAutomation
 
         #region: Tag PendingDrainTimeStamp
-        $vmPendingDrainTimeStamp = $vmTags.Properties.TagsProperty[$TagPendingDrainTimeStamp]
+        $vmPendingDrainTimeStamp = $vmTagsProperty[$TagPendingDrainTimeStamp]
         try {
             $vmPendingDrainTimeStamp = [DateTime]::Parse($vmPendingDrainTimeStamp)
             Write-PSFMessage -Level Host -Message 'VM has a tag {0} with value {1}' -StringValues $TagPendingDrainTimeStamp, $vmPendingDrainTimeStamp
@@ -101,7 +128,7 @@ function Get-SHRSessionHost {
         #endregion: Tag PendingDrainTimeStamp
 
         #region: Tag DeployInDrainMode
-        $vmDeployInDrainMode = $vmTags.Properties.TagsProperty[$TagDeployInDrainMode]
+        $vmDeployInDrainMode = $vmTagsProperty[$TagDeployInDrainMode]
         if ($vmDeployInDrainMode -eq "True") {
             Write-PSFMessage -Level Host -Message 'VM has a tag {0} with value {1}' -StringValues $TagDeployInDrainMode, $vmDeployInDrainMode
             $vmDeployInDrainMode = $true
@@ -112,13 +139,13 @@ function Get-SHRSessionHost {
         #endregion: Tag DeployInDrainMode
 
         $vmOutput = @{ # We are combining the VM details and SessionHost objects into a single PS Custom Object
-            VMName                = $vm.Name
+            VMName                = $vm.name
             FQDN                  = $item.Name -replace ".+\/(.+)", '$1'
             DeployTimestamp       = $vmDeployTimeStamp
             IncludeInAutomation   = $vmIncludeInAutomation
             PendingDrainTimeStamp = $vmPendingDrainTimeStamp
             DeployInDrainMode     = $vmDeployInDrainMode
-            ImageVersion          = $vm.StorageProfile.ImageReference.ExactVersion
+            ImageVersion          = $vm.exactVersion
         }
         $item.PSObject.Properties.ForEach{ $vmOutput[$_.Name] = $_.Value }
 
